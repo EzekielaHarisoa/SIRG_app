@@ -30,12 +30,17 @@ public class ClientController {
 
     @PutMapping("/client/{id}")
     public Client modifierClient(@PathVariable Long id, @RequestBody Client clientModifier) {
-        return clientService.modifClient(id,clientModifier);
+        return clientService.modifClient(
+                id,
+                clientModifier.getNom(),
+                clientModifier.getTelephone()
+        );
     }
 
     @DeleteMapping("/client/{id}")
     public void deletClient(@PathVariable Long id) {
-         clientService.deleteClient(id);
+        clientService.deleteClient(id);
+        System.out.println("suppression de client reussi ");
     }
 
 }

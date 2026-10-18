@@ -11,36 +11,34 @@ import java.util.List;
 
 @Service
 public class ClientService {
+    private final ClientRepository clientRepository;
     private final List<Client> clientsList = new ArrayList<>();
 
+    public ClientService(ClientRepository clientRepository) {
+        this.clientRepository = clientRepository;
+    }
+
     public List<Client> getClient() {
-        return clientsList;
+        return clientRepository.findAll();
     }
 
     public Client ajouterClient(Client client) {
-        client.setId((long) clientsList.size()+1);
-        clientsList.add(client);
-        return client;
+        return clientRepository.ajoutClient(
+                client.getId(),
+                client.getNom(),
+                client.getTelephone()
+        );
     }
 
     public Client getClientById(long id) {
-        return clientsList.stream()
-                .filter(cl -> cl.getId().equals(id))
-                .findFirst()
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "client not found")
-                );
+        return clientRepository.getClientById(id);
     }
 
-    public Client modifClient(long id, Client client) {
-        Client clientExiste = getClientById(id);
-        clientExiste.setNom(client.getNom());
-        clientExiste.setTelephone(client.getTelephone());
-        return clientExiste;
+    public Client modifClient(long id, String nom, String telephone) {
+        return clientRepository.modifierClient(id, nom, telephone);
     }
 
     public void deleteClient(long id) {
-        Client client = getClientById(id);
-        clientsList.remove(client);
+        clientRepository.deleteClient(id);
     }
 }
