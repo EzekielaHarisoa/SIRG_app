@@ -53,15 +53,17 @@ public class PointageRepository {
 
     public List<Pointage> findAllPointage() {
         String sql= """
-                    SELECT p.heure_entree,
+                SELECT p.heure_entree,
+                    p.id
                     p.heure_sortie,
                     p.date_pointage,
                     p.heure_sup, 
                     p.retard_minute, 
                     e.nom_et_prenoms 
-                    from pointage p 
-                    join  employe e on p.numero_matricule = e.numero_matricule
-                    ORDER BY p.date_pointage DESC
+                FROM pointage p
+                JOIN employe e
+                ON p.numero_matricule = e.numero_matricule
+                ORDER BY p.date_pointage DESC
                     """;
 
         return jdbcTemplate.query(sql, (rs, nrw) -> mapPointage(rs));
@@ -112,7 +114,7 @@ public class PointageRepository {
                     date_pointage,
                     heure_sup,
                     retard_minute,
-                    numero_matricule
+                    numero_matricule)
                 VALUES( ?, ?, ?, ?, ?, ?)    
                 """;
 

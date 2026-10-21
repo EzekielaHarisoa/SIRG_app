@@ -1,6 +1,5 @@
 package com.project.backend.employe;
 
-import com.project.backend.Client;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 

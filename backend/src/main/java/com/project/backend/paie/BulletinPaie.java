@@ -2,6 +2,9 @@ package com.project.backend.paie;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 
 public class BulletinPaie {
 
@@ -110,18 +113,44 @@ public class BulletinPaie {
         this.numeroMatricule = numeroMatricule;
     }
 
+
     private Long id;
+
+    @NotNull(message = "Le salaire de base est obligatoire")
+    @Positive(message = "Le salaire de base doit être supérieur à zéro")
     private BigDecimal salaireDeBase;
+
     private LocalDate dateEmission;
+
+    @PositiveOrZero(message = "Le total des primes ne peut pas être négatif")
     private BigDecimal totalPrime;
+
+    @PositiveOrZero(message = "Le salaire brut ne peut pas être négatif")
     private BigDecimal salaireBrute;
+
+    @PositiveOrZero(message = "La base IRSA ne peut pas être négative")
     private BigDecimal baseIrsa;
+
+    @PositiveOrZero(message = "L'IRSA ne peut pas être négatif")
     private BigDecimal irsa;
+
+    @PositiveOrZero(message = "Le salaire net ne peut pas être négatif")
     private BigDecimal salaireNet;
+
+    @PositiveOrZero(message = "Les charges patronales ne peuvent pas être négatives")
     private BigDecimal chargePatronal;
+
+    @PositiveOrZero(message = "Le coût global ne peut pas être négatif")
     private BigDecimal coutGlobale;
+
+    @PositiveOrZero(message = "Les heures travaillées ne peuvent pas être négatives")
     private BigDecimal heurTravaille;
+
+    @PositiveOrZero(message = "Le congé restant ne peut pas être négatif")
     private BigDecimal congeRestant;
+
+    @NotNull(message = "Le numéro matricule est obligatoire")
+    @Positive(message = "Le numéro matricule doit être supérieur à zéro")
     private Long numeroMatricule;
 
     public BulletinPaie() {

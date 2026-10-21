@@ -1,8 +1,7 @@
-package com.project.backend.config;
+package com.project.backend.shared;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
 
 public class DataBase implements CommandLineRunner {
 
