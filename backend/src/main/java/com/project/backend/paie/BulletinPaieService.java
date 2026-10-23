@@ -49,8 +49,7 @@ public class BulletinPaieService {
             throw  new IllegalArgumentException("Le salaire de base doit etre superieur a 0");
         }
 
-        if (bulletin.getNumeroMatricule() == null
-                || bulletin.getNumeroMatricule() <= 0) {
+        if (bulletin.getNumeroMatricule() == null || bulletin.getNumeroMatricule() <= 0) {
             throw new IllegalArgumentException("Le numéro matricule doit être supérieur à zéro");
         }
 

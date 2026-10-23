@@ -1,5 +1,7 @@
 package com.project.backend.employe;
 
+import jakarta.validation.constraints.NotNull;
+
 import java.util.Date;
 
 public class Employe {
@@ -60,12 +62,25 @@ public class Employe {
         this.posteId = posteId;
     }
 
+
     private long numerMatricule;
+
+    @NotNull(message = "Le nom Complete obligatoire")
     private String nomEtPrenoms;
+
+    @NotNull(message = "numero telephone obligatoire")
     private String telephone;
+
+    @NotNull(message = "adresse obligatoire")
     private String adresse;
+
+    @NotNull(message = "date embause obligatoire")
     private Date dateEmbauche;
+
+    @NotNull(message = "id de l'entreprise obligatoire")
     private Long entrepriseId;
+
+    @NotNull(message = "id du poste obligatoire")
     private Long posteId;
 
     public Employe() {}
