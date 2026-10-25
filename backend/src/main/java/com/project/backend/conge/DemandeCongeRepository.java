@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class DemandeCongeRepository {
@@ -57,7 +58,7 @@ public class DemandeCongeRepository {
 
     }
 
-    public List<DemandeConge> findById(long id) {
+    public Optional<DemandeConge> findById(long id) {
         String sql = """
             SELECT id, motif, status, type_conge,
                    date_de_demande, date_de_debut, date_fin,
@@ -66,7 +67,9 @@ public class DemandeCongeRepository {
             WHERE id = ?
             ORDER BY date_de_demande DESC
             """;
-        return  jdbcTemplate.query(sql,this::mapDemandeConge, id);
+        List<DemandeConge> resultat = jdbcTemplate.query(sql,this::mapDemandeConge, id);
+
+        return resultat.stream().findFirst();
     }
 
     public List<DemandeConge> findByNumeroMatricule(long numeroMatricule) {

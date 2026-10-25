@@ -1,5 +1,7 @@
 package com.project.backend.conge;
 
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,7 +21,7 @@ public class DemandeCongeController {
     }
 
     @GetMapping("/demandeConge/byId/{id}")
-    public List<DemandeConge> findById(@PathVariable long id) {
+    public DemandeConge findById(@PathVariable long id) {
         return demandeCongeService.findById(id);
     }
 
@@ -29,7 +31,8 @@ public class DemandeCongeController {
     }
 
     @PostMapping("/demandeConge")
-    public int save(@RequestBody DemandeConge demandeConge) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public int save(@Valid @RequestBody DemandeConge demandeConge) {
         return demandeCongeService.save(demandeConge);
     }
 
