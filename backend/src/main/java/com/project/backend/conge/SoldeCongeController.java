@@ -1,9 +1,9 @@
 package com.project.backend.conge;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 public class SoldeCongeController {
@@ -14,12 +14,22 @@ public class SoldeCongeController {
     }
 
     @GetMapping("/soldeConge/{numeroMatricule}")
-    public SoldeConge findByNumeroMatricule(@PathVariable long numeroMatricule) {
-        return soldeCongeService.findByNumeroMatricule(numeroMatricule);
+    public List<SoldeConge> findByNumeroMatricule(@PathVariable long numeroMatricule){
+        return soldeCongeService.findSoldeByNumeroMatricule(numeroMatricule);
     }
 
-    @PostMapping("/soldeconge")
-    public int save(SoldeConge soldeConge) {
+    @GetMapping("/soldeConge/{numeroMatricule}/{anne}")
+    public SoldeConge findByNumeroMatricule(@PathVariable long numeroMatricule, @PathVariable int anne) {
+        return soldeCongeService.findByNumeroMatriculeAndAnnee(numeroMatricule,anne);
+    }
+
+    @PostMapping("/soldeConge")
+    public int save(@Valid @RequestBody SoldeConge soldeConge) {
         return soldeCongeService.save(soldeConge);
+    }
+
+    @PutMapping("/soldeConge")
+    public int update(@Valid @RequestBody SoldeConge soldeConge) {
+        return soldeCongeService.update(soldeConge);
     }
 }

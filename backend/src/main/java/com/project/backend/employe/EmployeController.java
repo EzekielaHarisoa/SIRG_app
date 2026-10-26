@@ -1,5 +1,6 @@
 package com.project.backend.employe;
 
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -20,12 +21,12 @@ public class EmployeController {
     }
 
     @PostMapping("/employe")
-    public Employe ajouterEmploye(@RequestBody  Employe employe) {
+    public Employe ajouterEmploye(@Valid @RequestBody  Employe employe) {
         return employeService.ajouterEmploye(employe);
     }
 
     @PutMapping("/employe/{numeroMatricule}")
-    public  Employe modifierEmploye(@PathVariable long numeroMatricule,@RequestBody  Employe employe) {
+    public  Employe modifierEmploye(@PathVariable long numeroMatricule, @Valid @RequestBody  Employe employe) {
         return employeService.modifierEmploye(numeroMatricule, employe);
     }
 }

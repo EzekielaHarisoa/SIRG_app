@@ -1,10 +1,61 @@
+
 package com.project.backend.employe;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 import java.util.Date;
 
 public class Employe {
+
+    private long numerMatricule;
+
+    @NotBlank(message = "Le nom complet est obligatoire")
+    private String nomEtPrenoms;
+
+    @NotBlank(message = "Le numéro de téléphone est obligatoire")
+    private String telephone;
+
+    @NotBlank(message = "L'adresse est obligatoire")
+    private String adresse;
+
+    @NotNull(message = "La date d'embauche est obligatoire")
+    private Date dateEmbauche;
+
+    @NotNull(message = "L'identifiant de l'entreprise est obligatoire")
+    @Positive(message = "L'identifiant de l'entreprise doit être positif")
+    private Long entrepriseId;
+
+    @NotNull(message = "L'identifiant du poste est obligatoire")
+    @Positive(message = "L'identifiant du poste doit être positif")
+    private Long posteId;
+
+    public Employe() {
+    }
+
+    public Employe(String nomEtPrenoms, String telephone,
+                   String adresse, Date dateEmbauche,
+                   Long entrepriseId, Long posteId) {
+        this.nomEtPrenoms = nomEtPrenoms;
+        this.telephone = telephone;
+        this.adresse = adresse;
+        this.dateEmbauche = dateEmbauche;
+        this.entrepriseId = entrepriseId;
+        this.posteId = posteId;
+    }
+
+    public Employe(Long numerMatricule, String nomEtPrenoms,
+                   String telephone, String adresse,
+                   Date dateEmbauche, Long entrepriseId, Long posteId) {
+        this.numerMatricule = numerMatricule;
+        this.nomEtPrenoms = nomEtPrenoms;
+        this.telephone = telephone;
+        this.adresse = adresse;
+        this.dateEmbauche = dateEmbauche;
+        this.entrepriseId = entrepriseId;
+        this.posteId = posteId;
+    }
 
     public long getNumerMatricule() {
         return numerMatricule;
@@ -59,47 +110,6 @@ public class Employe {
     }
 
     public void setPosteId(Long posteId) {
-        this.posteId = posteId;
-    }
-
-
-    private long numerMatricule;
-
-    @NotNull(message = "Le nom Complete obligatoire")
-    private String nomEtPrenoms;
-
-    @NotNull(message = "numero telephone obligatoire")
-    private String telephone;
-
-    @NotNull(message = "adresse obligatoire")
-    private String adresse;
-
-    @NotNull(message = "date embause obligatoire")
-    private Date dateEmbauche;
-
-    @NotNull(message = "id de l'entreprise obligatoire")
-    private Long entrepriseId;
-
-    @NotNull(message = "id du poste obligatoire")
-    private Long posteId;
-
-    public Employe() {}
-
-    public Employe(String nomEtPrenoms, String telephone,String adresse, Date dateEmbauche, Long entrepriseId, Long posteId) {
-        this.nomEtPrenoms = nomEtPrenoms;
-        this.telephone = telephone;
-        this.adresse = adresse;
-        this.dateEmbauche = dateEmbauche;
-        this.entrepriseId = entrepriseId;
-        this.posteId = posteId;
-    }
-    public Employe(Long numerMatricule, String nomEtPrenoms, String telephone,String adresse, Date dateEmbauche, Long entrepriseId, Long posteId) {
-        this.numerMatricule = numerMatricule;
-        this.nomEtPrenoms = nomEtPrenoms;
-        this.telephone = telephone;
-        this.adresse = adresse;
-        this.dateEmbauche = dateEmbauche;
-        this.entrepriseId = entrepriseId;
         this.posteId = posteId;
     }
 }

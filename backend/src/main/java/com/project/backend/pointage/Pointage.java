@@ -1,5 +1,10 @@
-
 package com.project.backend.pointage;
+
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.PastOrPresent;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -8,11 +13,25 @@ import java.time.LocalDateTime;
 public class Pointage {
 
     private Long id;
+
     private LocalDateTime heureEntree;
+
     private LocalDateTime heureSortie;
+
+    @NotNull(message = "La date du pointage est obligatoire.")
+    @PastOrPresent(message = "La date du pointage ne peut pas être dans le futur.")
     private LocalDate datePointage;
+
+    @NotNull(message = "Les heures supplémentaires sont obligatoires.")
+    @DecimalMin(value = "0.0", message = "Les heures supplémentaires doivent être positives ou nulles.")
     private BigDecimal heureSup;
+
+    @NotNull(message = "Le nombre de minutes de retard est obligatoire.")
+    @PositiveOrZero(message = "Le retard ne peut pas être négatif.")
     private Integer retardMinute;
+
+    @NotNull(message = "Le numéro de matricule est obligatoire.")
+    @Positive(message = "Le numéro de matricule doit être positif.")
     private Long numeroMatricule;
 
     public Pointage() {

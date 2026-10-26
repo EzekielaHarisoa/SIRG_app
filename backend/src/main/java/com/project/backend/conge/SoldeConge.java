@@ -1,20 +1,42 @@
 
 package com.project.backend.conge;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
+
 import java.math.BigDecimal;
 
 public class SoldeConge {
 
     private Long id;
+
+//    @Positive(message = "Le matricule doit être positif")
     private Long numeroMatricule;
+
+    @Min(value = 1900, message = "L'année minimale est 1900")
+    @Max(value = 9999, message = "L'année maximale est 9999")
     private int annee;
+
+    @NotNull(message = "Le solde initial est obligatoire")
+    @PositiveOrZero(message = "Le solde initial ne peut pas être négatif")
     private BigDecimal soldeInitial;
+
+//    @NotNull(message = "Les jours acquis sont obligatoires")
+    @PositiveOrZero(message = "Les jours acquis ne peuvent pas être négatifs")
     private BigDecimal joursAcquis;
+
+//    @NotNull(message = "Les jours pris sont obligatoires")
+    @PositiveOrZero(message = "Les jours pris ne peuvent pas être négatifs")
     private BigDecimal joursPris;
+
+//    @NotNull(message = "Le solde restant est obligatoire")
+    @PositiveOrZero(message = "Le solde restant ne peut pas être négatif")
     private BigDecimal soldeRestant;
 
-    public SoldeConge() {
-    }
+    public SoldeConge() {}
 
     public Long getId() {
         return id;

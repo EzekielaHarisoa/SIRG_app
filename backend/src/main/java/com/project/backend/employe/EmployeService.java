@@ -28,6 +28,9 @@ public class EmployeService {
     }
 
     public Employe modifierEmploye(long numeroMatricule, Employe employe) {
+        if(numeroMatricule<= 0) {
+            throw  new EmployeNotFound(numeroMatricule);
+        }
         return employeRepository.modifierEmploye(
                 numeroMatricule,
                 employe.getNomEtPrenoms(),

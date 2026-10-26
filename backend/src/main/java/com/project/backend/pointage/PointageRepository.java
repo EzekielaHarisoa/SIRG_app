@@ -52,24 +52,25 @@ public class PointageRepository {
     }
 
     public List<Pointage> findAllPointage() {
-        String sql= """
-                SELECT p.heure_entree,
-                    p.id
-                    p.heure_sortie,
-                    p.date_pointage,
-                    p.heure_sup, 
-                    p.retard_minute, 
-                    e.nom_et_prenoms 
-                FROM pointage p
-                JOIN employe e
-                ON p.numero_matricule = e.numero_matricule
-                ORDER BY p.date_pointage DESC
-                    """;
+        String sql = """
+        SELECT p.id,
+               p.heure_entree,
+               p.heure_sortie,
+               p.date_pointage,
+               p.heure_sup,
+               p.retard_minute,
+               p.numero_matricule
+        FROM pointage p
+        JOIN employe e
+            ON p.numero_matricule = e.numero_matricule
+        ORDER BY p.date_pointage DESC
+        """;
 
-        return jdbcTemplate.query(sql, (rs, nrw) -> mapPointage(rs));
-
+        return jdbcTemplate.query(
+                sql,
+                (rs, rowNum) -> mapPointage(rs)
+        );
     }
-
     public List<Pointage> findPointageByDate(LocalDate date) {
         String sql = """
                 SELECT p.id, p.heure_entree, p.heure_sortie,
@@ -105,31 +106,35 @@ public class PointageRepository {
 
     }
 
-    public  Pointage fairePointage(Pointage pointage) {
-        String sql =
-                """
-                INSERT INTO pointage(
-                    heure_entree,
-                    heure_sortie,
-                    date_pointage,
-                    heure_sup,
-                    retard_minute,
-                    numero_matricule)
-                VALUES( ?, ?, ?, ?, ?, ?)    
-                """;
+    public Pointage fairePointage(Pointage pointage) {
+        String sql = """
+        INSERT INTO pointage (
+            heure_entree,
+            heure_sortie,
+            date_pointage,
+            heure_sup,
+            retard_minute,
+            numero_matricule
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+        """;
 
         jdbcTemplate.update(
                 sql,
-                Timestamp.valueOf(pointage.getHeureEntree()),
-                pointage.getHeureSortie() != null ? Timestamp.valueOf(pointage.getHeureSortie()) : null,
-                Date.valueOf(pointage.getDatePointage()),
+                pointage.getHeureEntree() != null
+                        ? Timestamp.valueOf(pointage.getHeureEntree())
+                        : null,
+                pointage.getHeureSortie() != null
+                        ? Timestamp.valueOf(pointage.getHeureSortie())
+                        : null,
+                pointage.getDatePointage() != null
+                        ? Date.valueOf(pointage.getDatePointage())
+                        : null,
                 pointage.getHeureSup(),
                 pointage.getRetardMinute(),
                 pointage.getNumeroMatricule()
         );
 
         return pointage;
-
     }
-
 }

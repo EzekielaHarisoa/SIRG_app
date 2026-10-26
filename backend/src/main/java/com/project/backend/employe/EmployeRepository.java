@@ -39,6 +39,7 @@ public class EmployeRepository {
     }
 
     public Employe getemployeById(long numeroMatricule) {
+
         String sql = "select numero_matricule, nom_et_prenoms, telephone, adresse, date_embauche, entreprise_id, poste_id from employe where numero_matricule = ?";
         return  jdbcTemplate.queryForObject(sql, (rs, nrw) -> {
 
@@ -60,7 +61,7 @@ public class EmployeRepository {
     public Employe modifierEmploye(long numeroMatricule, String nomEtPrenoms, String telephone, String adresse, Date dateEmbauche, Long entrepriseId, Long posteId) {
         String sql = "UPDATE employe SET  nom_et_prenoms = ?, telephone = ?,  adresse = ?,  date_embauche = ?,  entreprise_id = ?,  poste_id = ? where numero_matricule = ?";
 
-        Employe employe = getemployeById(numeroMatricule);
+
 
         int ligneModifier = jdbcTemplate.update(sql,
                 nomEtPrenoms,
@@ -75,7 +76,7 @@ public class EmployeRepository {
             return null;
         }
 
-        return employe;
+        return getemployeById(numeroMatricule);
     }
 
 
