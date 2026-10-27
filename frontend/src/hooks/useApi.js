@@ -1,45 +1,48 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 /**
- * Generic data-fetching hook.
+ * useApi — loads data from a service function and exposes loading/error/data + refetch.
+ * Respects component unmount: no state updates after the component is gone.
  *
- * @param {Function} fetcher - () => Promise<data>. Called on mount and whenever
- *   `deps` change. Must return a Promise; rejected values become `error`.
- * @param {Array} deps - Dependency array for re-fetching (like useEffect deps).
- * @returns {{ data, error, loading, refetch }}
+ * @param {() => Promise<any>} fetcher
+ * @param {Array} deps - dependency array; refetch runs when these change
  */
 export function useApi(fetcher, deps = []) {
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // Guard against setting state after unmount / after a newer call.
-  const requestId = useRef(0)
+  const mountedRef = useRef(true)
+  const fetcherRef = useRef(fetcher)
+  fetcherRef.current = fetcher
 
-  const run = useCallback(() => {
-    const id = ++requestId.current
+  const refetch = useCallback(async () => {
     setLoading(true)
     setError(null)
-    fetcher()
-      .then((result) => {
-        if (id !== requestId.current) return
+    try {
+      const result = await fetcherRef.current()
+      if (mountedRef.current) {
         setData(result)
         setLoading(false)
-      })
-      .catch((err) => {
-        if (id !== requestId.current) return
+      }
+    } catch (err) {
+      if (mountedRef.current) {
         setError(err)
         setLoading(false)
-      })
-  }, deps) // eslint-disable-line react-hooks/exhaustive-deps
+      }
+    }
+  }, [])
 
   useEffect(() => {
-    run()
+    mountedRef.current = true
+    refetch()
     return () => {
-      // Invalidate any in-flight call on unmount.
-      requestId.current++
+      mountedRef.current = false
     }
-  }, [run])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps)
 
-  return { data, error, loading, refetch: run }
+  return { data, error, loading, refetch }
 }
+
+export default useApi

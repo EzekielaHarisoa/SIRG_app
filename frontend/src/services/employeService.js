@@ -1,15 +1,15 @@
-import { api } from './api'
+import api from './api.js'
 
-/**
- * Service for the "Employés" resource (employe-controller).
- * Endpoints:
- *   GET  /employe                  — list employés
- *   POST /employe                  — create an employé
- *   PUT  /employe/{numeroMatricule}— update an employé
- * No DELETE endpoint is provided by the backend.
- */
-export const employeService = {
-  list: () => api.get('/employe'),
-  create: (payload) => api.post('/employe', payload),
-  update: (numeroMatricule, payload) => api.put(`/employe/${numeroMatricule}`, payload),
+export function getAllEmployes() {
+  return api.get('/employe')
 }
+
+export function createEmploye(payload) {
+  return api.post('/employe', payload)
+}
+
+export function updateEmploye(numeroMatricule, payload) {
+  return api.put(`/employe/${encodeURIComponent(numeroMatricule)}`, payload)
+}
+
+export default { getAllEmployes, createEmploye, updateEmploye }

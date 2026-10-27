@@ -1,8 +1,5 @@
-/**
- * Reusable labeled form field. Renders a text input by default; pass
- * `as="textarea"` or `as="select"` to switch the control, or override with
- * `children`.
- */
+const TYPES = ['text', 'email', 'tel', 'password', 'number', 'date', 'time', 'datetime-local']
+
 export default function FormField({
   label,
   name,
@@ -11,59 +8,80 @@ export default function FormField({
   onChange,
   error,
   required = false,
+  disabled = false,
   placeholder,
-  as = 'input',
-  children,
-  ...props
+  hint,
+  options,
+  rows,
+  className = '',
 }) {
-  const id = `field-${name}`
-  const inputClass = `w-full rounded-md border px-3 py-2 text-sm text-neutral-900 transition focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-    error ? 'border-error-400 focus:ring-error-500' : 'border-neutral-300'
-  }`
+  const inputId = `field-${name}`
+  const resolvedType = TYPES.includes(type) ? type : 'text'
+
+  const baseClass = [
+    'w-full rounded-md border bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400',
+    'focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400',
+    'disabled:cursor-not-allowed disabled:bg-slate-100',
+    error ? 'border-red-400' : 'border-slate-300',
+    className,
+  ].join(' ')
 
   return (
-    <div className="space-y-1.5">
-      <label htmlFor={id} className="block text-sm font-medium text-neutral-700">
-        {label}
-        {required && <span className="ml-0.5 text-error-600">*</span>}
-      </label>
-      {as === 'textarea' ? (
-        <textarea
-          id={id}
-          name={name}
-          value={value ?? ''}
-          onChange={onChange}
-          placeholder={placeholder}
-          required={required}
-          className={inputClass}
-          {...props}
-        />
-      ) : as === 'select' ? (
+    <div className="flex flex-col gap-1">
+      {label && (
+        <label htmlFor={inputId} className="text-sm font-medium text-slate-700">
+          {label}
+          {required && <span className="ml-0.5 text-red-500">*</span>}
+        </label>
+      )}
+      {options ? (
         <select
-          id={id}
+          id={inputId}
           name={name}
           value={value ?? ''}
           onChange={onChange}
+          disabled={disabled}
           required={required}
-          className={inputClass}
-          {...props}
+          className={baseClass}
         >
-          {children}
+          <option value="">— Sélectionner —</option>
+          {options.map((opt) => {
+            const val = typeof opt === 'object' ? opt.value : opt
+            const lbl = typeof opt === 'object' ? opt.label : opt
+            return (
+              <option key={val} value={val}>
+                {lbl}
+              </option>
+            )
+          })}
         </select>
+      ) : rows ? (
+        <textarea
+          id={inputId}
+          name={name}
+          value={value ?? ''}
+          onChange={onChange}
+          disabled={disabled}
+          required={required}
+          placeholder={placeholder}
+          rows={rows}
+          className={baseClass}
+        />
       ) : (
         <input
-          id={id}
+          id={inputId}
           name={name}
-          type={type}
+          type={resolvedType}
           value={value ?? ''}
           onChange={onChange}
-          placeholder={placeholder}
+          disabled={disabled}
           required={required}
-          className={inputClass}
-          {...props}
+          placeholder={placeholder}
+          className={baseClass}
         />
       )}
-      {error && <p className="text-xs text-error-600">{error}</p>}
+      {hint && !error && <p className="text-xs text-slate-400">{hint}</p>}
+      {error && <p className="text-xs text-red-600">{error}</p>}
     </div>
   )
 }

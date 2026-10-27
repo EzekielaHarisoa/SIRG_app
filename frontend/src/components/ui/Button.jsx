@@ -1,27 +1,55 @@
-/**
- * Standard action button used across pages.
- * variant: 'primary' | 'secondary' | 'ghost' | 'danger'
- */
+const VARIANTS = {
+  primary:
+    'bg-slate-800 text-white hover:bg-slate-700 focus-visible:outline-slate-800 border border-transparent',
+  secondary:
+    'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 focus-visible:outline-slate-400',
+  accent:
+    'bg-sky-600 text-white hover:bg-sky-500 focus-visible:outline-sky-600 border border-transparent',
+  danger:
+    'bg-red-600 text-white hover:bg-red-500 focus-visible:outline-red-600 border border-transparent',
+  ghost:
+    'bg-transparent text-slate-600 border border-transparent hover:bg-slate-100 focus-visible:outline-slate-400',
+}
+
+const SIZES = {
+  sm: 'px-3 py-1.5 text-sm',
+  md: 'px-4 py-2 text-sm',
+  lg: 'px-5 py-2.5 text-base',
+}
+
 export default function Button({
   variant = 'primary',
+  size = 'md',
   type = 'button',
+  disabled = false,
+  loading = false,
   className = '',
   children,
-  ...props
+  ...rest
 }) {
-  const variants = {
-    primary: 'bg-primary-600 text-white hover:bg-primary-700 border border-transparent',
-    secondary: 'bg-white text-neutral-700 hover:bg-neutral-50 border border-neutral-300',
-    ghost: 'bg-transparent text-neutral-600 hover:bg-neutral-100 border border-transparent',
-    danger: 'bg-error-600 text-white hover:bg-error-700 border border-transparent',
-  }
-
+  const variantClass = VARIANTS[variant] || VARIANTS.primary
+  const sizeClass = SIZES[size] || SIZES.md
+  const isDisabled = disabled || loading
   return (
     <button
       type={type}
-      className={`inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`}
-      {...props}
+      disabled={isDisabled}
+      className={[
+        'inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors',
+        'focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2',
+        'disabled:cursor-not-allowed disabled:opacity-60',
+        variantClass,
+        sizeClass,
+        className,
+      ].join(' ')}
+      {...rest}
     >
+      {loading && (
+        <span
+          aria-hidden="true"
+          className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent"
+        />
+      )}
       {children}
     </button>
   )
