@@ -26,7 +26,7 @@ async function parseResponse(response) {
 function buildError(status, body) {
   let message
   if (body && typeof body === 'object') {
-    message = body.message || body.error || body.detail
+    message = body.message || body.error || body.detail || body.erreur
     if (Array.isArray(body.errors) && body.errors.length > 0) {
       const first = body.errors[0]
       message = message || (typeof first === 'string' ? first : first?.defaultMessage || first?.message)
@@ -42,7 +42,14 @@ function buildError(status, body) {
 
 async function request(method, path, body) {
   let url = `${BASE_URL}${path}`
-  let init = { method, headers: {} }
+  let init = { method, headers: {}, credentials: 'include' }
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+    const csrfToken = document.cookie
+      .split('; ')
+      .find((cookie) => cookie.startsWith('XSRF-TOKEN='))
+      ?.slice('XSRF-TOKEN='.length)
+    if (csrfToken) init.headers['X-XSRF-TOKEN'] = decodeURIComponent(csrfToken)
+  }
 
   if (body !== undefined && body !== null) {
     init.headers['Content-Type'] = 'application/json'
@@ -74,6 +81,7 @@ export const api = {
   post: (path, body) => request('POST', path, body),
   put: (path, body) => request('PUT', path, body),
   baseUrl: BASE_URL,
+  currentUser: () => request('GET', '/auth/me'),
 }
 
 export default api

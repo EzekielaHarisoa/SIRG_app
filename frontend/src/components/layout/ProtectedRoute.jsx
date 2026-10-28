@@ -8,8 +8,10 @@ import { ROLE_LABELS } from '../../config/contracts.js'
  * role does not match. This is NOT backend security.
  */
 export default function ProtectedRoute({ allowRoles, children }) {
-  const { isAuthenticated, role } = useAuth()
+  const { isAuthenticated, role, sessionReady } = useAuth()
   const location = useLocation()
+
+  if (!sessionReady) return null
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />

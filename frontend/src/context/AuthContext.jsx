@@ -1,41 +1,55 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { ROLES, ROLE_LABELS } from '../config/contracts.js'
-import { loginRequest, logoutRequest } from '../services/authService.js'
+import { currentUserRequest, loginRequest, logoutRequest } from '../services/authService.js'
 
 const STORAGE_KEY = 'sirg.auth'
 
 const AuthContext = createContext(null)
 
-function readStored() {
+function readPreview() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return null
-    const parsed = JSON.parse(raw)
-    if (parsed && parsed.role && parsed.login) return parsed
+    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
+    if (parsed?.preview && parsed.role && parsed.login) return parsed
   } catch {
-    /* ignore */
+    /* ignore invalid preview data */
   }
   return null
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => readStored())
+  const [user, setUser] = useState(() => readPreview())
+  const [sessionReady, setSessionReady] = useState(() => !!readPreview())
 
-  // Real login is not possible until a backend auth endpoint exists.
-  // login() attempts the real endpoint; on failure it surfaces the error and
-  // does NOT fabricate a session. A separate previewRole() is provided for
-  // development preview only.
+  useEffect(() => {
+    if (user?.preview) {
+      setSessionReady(true)
+      return undefined
+    }
+    let active = true
+    setSessionReady(false)
+    currentUserRequest()
+      .then((currentUser) => {
+        if (active) setUser(currentUser)
+      })
+      .catch(() => {
+        if (active) setUser(null)
+      })
+      .finally(() => {
+        if (active) setSessionReady(true)
+      })
+    return () => {
+      active = false
+    }
+  }, [user?.preview])
+
+  // The API owns real sessions; only explicit development previews use local storage.
   const login = useCallback(async ({ login: loginField, password, role }) => {
     const result = await loginRequest({ login: loginField, password, role })
     // If/when the backend returns a user object, persist it here.
-    const session = {
-      login: loginField,
-      role,
-      nom: result?.nom || loginField,
-      ...result,
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(session))
+    const session = { ...result, login: result?.login || loginField }
+    localStorage.removeItem(STORAGE_KEY)
     setUser(session)
+    setSessionReady(true)
     return session
   }, [])
 
@@ -47,6 +61,7 @@ export function AuthProvider({ children }) {
     }
     localStorage.removeItem(STORAGE_KEY)
     setUser(null)
+    setSessionReady(true)
   }, [])
 
   // Dev-only role preview — NOT a real authentication. Bypasses the backend.
@@ -59,12 +74,14 @@ export function AuthProvider({ children }) {
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(session))
     setUser(session)
+    setSessionReady(true)
     return session
   }, [])
 
   const value = useMemo(
     () => ({
       user,
+      sessionReady,
       role: user?.role || null,
       isAuthenticated: !!user,
       isPreview: !!user?.preview,
@@ -74,7 +91,7 @@ export function AuthProvider({ children }) {
       ROLES,
       ROLE_LABELS,
     }),
-    [user, login, logout, previewRole],
+    [user, sessionReady, login, logout, previewRole],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

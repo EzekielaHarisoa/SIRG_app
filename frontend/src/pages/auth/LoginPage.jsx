@@ -42,18 +42,23 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-[400px]">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-semibold text-slate-800">SIRG</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-blue-700 text-lg font-bold text-white">S</div>
+          <h1 className="text-2xl font-bold tracking-wide text-slate-900">SIRG</h1>
+          <p className="mx-auto mt-1 max-w-sm text-sm leading-5 text-slate-500">
             Système intégré de gestion des ressources humaines et de paie
           </p>
         </div>
 
         <form
           onSubmit={handleLogin}
-          className="space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
+          className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
         >
+          <div className="mb-1">
+            <h2 className="text-lg font-bold text-slate-900">Bienvenue</h2>
+            <p className="mt-1 text-sm text-slate-500">Connectez-vous à votre espace de travail.</p>
+          </div>
           <FormField
             label="Login"
             name="login"
@@ -89,16 +94,19 @@ export default function LoginPage() {
             Se connecter
           </Button>
 
-          <p className="text-center text-xs text-slate-400">
-            Aucun endpoint dauthentification nest configuré sur le backend. La connexion réelle
-            nest pas possible pour le moment.
-          </p>
+
         </form>
 
-        <div className="mt-4 rounded-lg border border-dashed border-slate-300 bg-white p-4">
-          <p className="text-xs font-medium text-slate-500">
-            Prévisualisation des espaces (développement — non sécurisé)
-          </p>
+        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-sm text-blue-700" aria-hidden="true">i</span>
+            <div>
+              <p className="text-xs font-bold text-slate-700">Explorer les espaces</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                Prévisualisation de développement — non sécurisée, sans connexion réelle.
+              </p>
+            </div>
+          </div>
           <div className="mt-3 flex flex-wrap gap-2">
             {ROLE_OPTIONS.map((r) => (
               <Button

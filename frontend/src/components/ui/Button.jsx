@@ -1,10 +1,10 @@
 const VARIANTS = {
   primary:
-    'bg-slate-800 text-white hover:bg-slate-700 focus-visible:outline-slate-800 border border-transparent',
+    'bg-blue-600 text-white hover:bg-blue-700 focus-visible:outline-blue-500 border border-transparent',
   secondary:
     'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 focus-visible:outline-slate-400',
   accent:
-    'bg-sky-600 text-white hover:bg-sky-500 focus-visible:outline-sky-600 border border-transparent',
+    'bg-blue-600 text-white hover:bg-blue-700 focus-visible:outline-blue-600 border border-transparent',
   danger:
     'bg-red-600 text-white hover:bg-red-500 focus-visible:outline-red-600 border border-transparent',
   ghost:
