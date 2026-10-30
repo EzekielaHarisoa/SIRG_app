@@ -1,15 +1,16 @@
 package com.project.backend.pointage;
 
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.math.BigDecimal;
+import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.sql.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class PointageRepository {
@@ -136,5 +137,118 @@ public class PointageRepository {
         );
 
         return pointage;
+    }
+
+    public Optional<Pointage> findByMatriculeAndDate(Long numeroMatricule, LocalDate date) {
+
+        String sql = """
+            SELECT id,
+                   heure_entree,
+                   heure_sortie,
+                   date_pointage,
+                   heure_sup,
+                   retard_minute,
+                   numero_matricule
+            FROM pointage
+            WHERE numero_matricule = ?
+              AND date_pointage >= ?
+              AND date_pointage < ?
+            ORDER BY id DESC
+            FETCH FIRST 1 ROW ONLY
+            """;
+
+        return jdbcTemplate.query(
+                sql,
+                (rs, rowNum) -> mapPointage(rs),
+                numeroMatricule,
+                Date.valueOf(date),
+                Date.valueOf(date.plusDays(1))
+        ).stream().findFirst();
+    }
+
+
+    public Pointage creerPointageJournalier(Long numeroMatricule, LocalDateTime heureEntree) {
+
+        String sql = """
+            INSERT INTO pointage (
+                heure_entree,
+                date_pointage,
+                numero_matricule,
+                heure_sup,
+                retard_minute
+            )
+            VALUES (?, ?, ?, 0, 0)
+            """;
+
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(sql, new String[]{"ID"});
+
+            ps.setTimestamp(1, Timestamp.valueOf(heureEntree));
+            ps.setDate(2, Date.valueOf(heureEntree.toLocalDate()));
+            ps.setLong(3, numeroMatricule);
+
+            return ps;
+        }, keyHolder);
+
+        if (keyHolder.getKey() == null) {
+            throw new IllegalStateException(
+                    "Impossible de récupérer l'identifiant du pointage."
+            );
+        }
+
+        Pointage pointage = new Pointage();
+        pointage.setId(keyHolder.getKey().longValue());
+        pointage.setNumeroMatricule(numeroMatricule);
+        pointage.setDatePointage(heureEntree.toLocalDate());
+        pointage.setHeureEntree(heureEntree);
+        pointage.setHeureSup(BigDecimal.ZERO);
+        pointage.setRetardMinute(0);
+
+        return pointage;
+    }
+
+    public void mettreAJourHeureSortie(Long pointageId, LocalDateTime heureSortie) {
+
+        String sql = """
+            UPDATE pointage
+            SET heure_sortie = ?
+            WHERE id = ?
+            """;
+
+        int lignesModifiees = jdbcTemplate.update(
+                sql,
+                Timestamp.valueOf(heureSortie),
+                pointageId
+        );
+
+        if (lignesModifiees != 1) {
+            throw new IllegalStateException(
+                    "Impossible de mettre à jour l'heure de sortie."
+            );
+        }
+    }
+
+    public void mettreAJourCalculs(Long pointageId, BigDecimal heureSup, Integer retardMinute) {
+        String sql = """
+        UPDATE pointage
+        SET heure_sup = ?,
+            retard_minute = ?
+        WHERE id = ?
+        """;
+
+        int lignesModifiees = jdbcTemplate.update(
+                sql,
+                heureSup,
+                retardMinute,
+                pointageId
+        );
+
+        if (lignesModifiees != 1) {
+            throw new IllegalStateException(
+                    "Impossible de mettre à jour les calculs du pointage."
+            );
+        }
     }
 }
