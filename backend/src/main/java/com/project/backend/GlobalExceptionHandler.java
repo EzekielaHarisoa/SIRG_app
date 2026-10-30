@@ -8,6 +8,7 @@ import com.project.backend.paie.BulletinPaieNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -112,6 +113,17 @@ public class GlobalExceptionHandler {
                         "L'opération viole une contrainte "
                                 + "de la base de données."
                 ));
+    }
+
+    // Authentification invalide ou session absente : 401
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<Map<String, String>> gererErreurAuthentification(
+            AuthenticationException e) {
+
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("erreur", "Identifiants invalides ou session expirée."));
     }
 
     // Erreur inattendue : 500

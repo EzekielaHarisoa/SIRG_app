@@ -17,6 +17,28 @@ export const ROLE_LABELS = {
   COMPTABLE: 'Comptable',
 }
 
+// Roles returned by the backend (POST /api/auth/login) mapped to the internal
+// role keys used by the routes and layouts.
+export const ROLE_ALIASES = {
+  EMPLOYE: ROLES.EMPLOYE,
+  RESPONSABLE: ROLES.RH,
+  RH: ROLES.RH,
+  COMPTABLE: ROLES.COMPTABLE,
+}
+
+export function normalizeRole(role) {
+  const key = String(role ?? '')
+    .trim()
+    .toUpperCase()
+  return ROLE_ALIASES[key] || null
+}
+
+// Login payload expected by the backend.
+export const AUTH_FIELDS = {
+  login: 'login',
+  motDePasse: 'motDePasse',
+}
+
 // ---- Employé ----
 export const EMPLOYE_FIELDS = {
   // ASSUMED — confirm against OpenAPI /employe POST & PUT bodies.

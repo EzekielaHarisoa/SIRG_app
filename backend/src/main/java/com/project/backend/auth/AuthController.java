@@ -19,18 +19,28 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+
+        System.out.println("========== AUTHENTIFICATION ==========");
+        System.out.println(">>> AuthController.login() appelé");
+
         try {
+            System.out.println(">>> Appel du AuthService");
+
             LoginResponse response = authService.connecter(
                     request.getLogin(),
                     request.getMotDePasse()
             );
 
+            System.out.println(">>> Authentification réussie");
+
             return ResponseEntity.ok(response);
 
         } catch (IllegalArgumentException e) {
+
+            System.out.println(">>> Erreur : " + e.getMessage());
+
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
                     .body(java.util.Map.of("message", e.getMessage()));
         }
-    }
-}
+    }}

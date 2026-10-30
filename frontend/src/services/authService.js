@@ -1,17 +1,17 @@
 import api from './api.js'
 
-export async function loginRequest({ login, password, role }) {
-  await api.get('/auth/csrf')
-  return api.post('/auth/login', { login, password, role })
+/**
+ * Authenticates a user against the Spring Boot backend.
+ *
+ * Backend contract (AuthController): POST /api/auth/login
+ *   body    : { login, motDePasse }
+ *   success : 200 { id, login, numeroMatricule, nomEtPrenoms, role }
+ *   failure : 401 { message }
+ */
+export function loginRequest({ login, motDePasse }) {
+  return api.post('/api/auth/login', { login, motDePasse })
 }
 
-export async function currentUserRequest() {
-  return api.currentUser()
-}
-
-export async function logoutRequest() {
-  await api.get('/auth/csrf')
-  return api.post('/auth/logout', {})
-}
-
-export default { loginRequest, currentUserRequest, logoutRequest }
+// No /auth/logout endpoint is provided by the backend: the session is held by
+// the frontend only (see AuthContext), so logout just clears it locally.
+export default { loginRequest }

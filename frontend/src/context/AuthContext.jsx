@@ -1,97 +1,87 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { ROLES, ROLE_LABELS } from '../config/contracts.js'
-import { currentUserRequest, loginRequest, logoutRequest } from '../services/authService.js'
+import { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { ROLES, ROLE_LABELS, normalizeRole } from '../config/contracts.js'
+import { loginRequest } from '../services/authService.js'
 
-const STORAGE_KEY = 'sirg.auth'
+// The session lives in sessionStorage only: no token is issued by the backend
+// yet, and this is not a security mechanism.
+const STORAGE_KEY = 'sirg.user'
 
 const AuthContext = createContext(null)
 
-function readPreview() {
+function readStoredUser() {
   try {
-    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
-    if (parsed?.preview && parsed.role && parsed.login) return parsed
+    const parsed = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || 'null')
+    if (parsed?.login && parsed?.role) return parsed
   } catch {
-    /* ignore invalid preview data */
+    /* ignore unreadable session storage */
   }
   return null
 }
 
+/**
+ * Maps the backend response to the session shape used by the UI.
+ * Throws when the response cannot drive a valid workspace.
+ */
+function toSessionUser(payload) {
+  if (!payload || typeof payload !== 'object') {
+    throw new Error('Réponse inattendue du serveur. Veuillez réessayer.')
+  }
+
+  const role = normalizeRole(payload.role)
+  if (!role) {
+    throw new Error(
+      `Le rôle « ${payload.role ?? 'inconnu'} » renvoyé par le serveur n’est pas reconnu par l’application.`,
+    )
+  }
+
+  return {
+    id: payload.id ?? null,
+    login: payload.login ?? '',
+    numeroMatricule: payload.numeroMatricule ?? null,
+    nomEtPrenoms: payload.nomEtPrenoms || payload.login || '',
+    role,
+    backendRole: payload.role,
+  }
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => readPreview())
-  const [sessionReady, setSessionReady] = useState(() => !!readPreview())
+  const [user, setUser] = useState(readStoredUser)
 
-  useEffect(() => {
-    if (user?.preview) {
-      setSessionReady(true)
-      return undefined
-    }
-    let active = true
-    setSessionReady(false)
-    currentUserRequest()
-      .then((currentUser) => {
-        if (active) setUser(currentUser)
-      })
-      .catch(() => {
-        if (active) setUser(null)
-      })
-      .finally(() => {
-        if (active) setSessionReady(true)
-      })
-    return () => {
-      active = false
-    }
-  }, [user?.preview])
+  const login = useCallback(async ({ login: loginField, motDePasse }) => {
+    const payload = await loginRequest({ login: loginField, motDePasse })
+    const session = toSessionUser(payload)
 
-  // The API owns real sessions; only explicit development previews use local storage.
-  const login = useCallback(async ({ login: loginField, password, role }) => {
-    const result = await loginRequest({ login: loginField, password, role })
-    // If/when the backend returns a user object, persist it here.
-    const session = { ...result, login: result?.login || loginField }
-    localStorage.removeItem(STORAGE_KEY)
-    setUser(session)
-    setSessionReady(true)
-    return session
-  }, [])
-
-  const logout = useCallback(async () => {
     try {
-      await logoutRequest()
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session))
     } catch {
-      /* ignore network error on logout */
+      /* storage may be unavailable; the in-memory session still works */
     }
-    localStorage.removeItem(STORAGE_KEY)
-    setUser(null)
-    setSessionReady(true)
+
+    setUser(session)
+    return session
   }, [])
 
-  // Dev-only role preview — NOT a real authentication. Bypasses the backend.
-  const previewRole = useCallback((role) => {
-    const session = {
-      login: `preview_${role.toLowerCase()}`,
-      role,
-      nom: `Prévisualisation ${ROLE_LABELS[role] || role}`,
-      preview: true,
+  const logout = useCallback(() => {
+    try {
+      sessionStorage.removeItem(STORAGE_KEY)
+    } catch {
+      /* ignore */
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(session))
-    setUser(session)
-    setSessionReady(true)
-    return session
+    setUser(null)
   }, [])
 
   const value = useMemo(
     () => ({
       user,
-      sessionReady,
+      sessionReady: true,
       role: user?.role || null,
       isAuthenticated: !!user,
-      isPreview: !!user?.preview,
       login,
       logout,
-      previewRole,
       ROLES,
       ROLE_LABELS,
     }),
-    [user, sessionReady, login, logout, previewRole],
+    [user, login, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

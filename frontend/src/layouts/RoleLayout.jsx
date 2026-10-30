@@ -55,12 +55,12 @@ function initials(name) {
 }
 
 export default function RoleLayout({ children }) {
-  const { user, role, logout, isPreview } = useAuth()
+  const { user, role, logout } = useAuth()
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
   const config = MENU[role] || MENU.EMPLOYE
-  const displayName = user?.nom || user?.login || 'Utilisateur'
+  const displayName = user?.nomEtPrenoms || user?.login || 'Utilisateur'
   const activeLink = [...config.links]
     .sort((a, b) => b.to.length - a.to.length)
     .find((link) => pathname === link.to || pathname.startsWith(`${link.to}/`))
@@ -128,7 +128,6 @@ export default function RoleLayout({ children }) {
         </div>
 
         <div className="border-t border-slate-200 px-4 py-3">
-          {isPreview && <p className="mb-2 rounded-md bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800">Mode prévisualisation</p>}
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs font-semibold text-blue-700">{initials(displayName)}</div>
             <div className="min-w-0 flex-1">
@@ -165,7 +164,6 @@ export default function RoleLayout({ children }) {
             )}
           </div>
           <div className="flex items-center gap-2">
-            {isPreview && <span className="hidden rounded-md bg-amber-50 px-2 py-1 text-xs text-amber-800 sm:inline-flex">Prévisualisation</span>}
             <div className="hidden items-center gap-2 border-l border-slate-200 pl-3 sm:flex">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-xs font-semibold text-blue-700">{initials(displayName)}</div>
               <span className="max-w-40 truncate text-sm text-slate-700">{displayName}</span>

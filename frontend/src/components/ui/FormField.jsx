@@ -13,6 +13,7 @@ export default function FormField({
   hint,
   options,
   rows,
+  autoComplete,
   className = '',
 }) {
   const inputId = `field-${name}`
@@ -77,6 +78,7 @@ export default function FormField({
           disabled={disabled}
           required={required}
           placeholder={placeholder}
+          autoComplete={autoComplete}
           className={baseClass}
         />
       )}

@@ -1,43 +1,46 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
-import { ROLES, ROLE_LABELS } from '../../config/contracts.js'
 import FormField from '../../components/ui/FormField.jsx'
 import Button from '../../components/ui/Button.jsx'
 import { roleHomePath } from '../../components/layout/ProtectedRoute.jsx'
+import { ApiError } from '../../services/api.js'
 
-const ROLE_OPTIONS = [
-  { value: ROLES.EMPLOYE, label: ROLE_LABELS[ROLES.EMPLOYE] },
-  { value: ROLES.RH, label: ROLE_LABELS[ROLES.RH] },
-  { value: ROLES.COMPTABLE, label: ROLE_LABELS[ROLES.COMPTABLE] },
-]
+function loginErrorMessage(error) {
+  if (error instanceof ApiError) {
+    if (error.status === 401) return 'Login ou mot de passe incorrect.'
+    if (error.status === 0) {
+      return 'Serveur injoignable. Vérifiez que le backend Spring Boot est démarré sur le port 8080.'
+    }
+  }
+  return error?.message || 'Une erreur est survenue lors de la connexion.'
+}
 
 export default function LoginPage() {
-  const { login, previewRole } = useAuth()
+  const { login } = useAuth()
   const navigate = useNavigate()
 
   const [loginField, setLoginField] = useState('')
-  const [password, setPassword] = useState('')
-  const [role, setRole] = useState(ROLES.EMPLOYE)
+  const [motDePasse, setMotDePasse] = useState('')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
 
   const handleLogin = async (e) => {
     e.preventDefault()
+    if (loading) return
+
     setError(null)
     setLoading(true)
     try {
-      await login({ login: loginField, password, role })
-      navigate(roleHomePath(role), { replace: true })
+      const session = await login({
+        login: loginField.trim(),
+        motDePasse,
+      })
+      navigate(roleHomePath(session.role), { replace: true })
     } catch (err) {
       setError(err)
       setLoading(false)
     }
-  }
-
-  const handlePreview = (r) => {
-    previewRole(r)
-    navigate(roleHomePath(r), { replace: true })
   }
 
   return (
@@ -65,61 +68,31 @@ export default function LoginPage() {
             value={loginField}
             onChange={(e) => setLoginField(e.target.value)}
             required
+            autoComplete="username"
             placeholder="Identifiant"
           />
           <FormField
             label="Mot de passe"
-            name="password"
+            name="motDePasse"
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={motDePasse}
+            onChange={(e) => setMotDePasse(e.target.value)}
             required
-          />
-          <FormField
-            label="Rôle"
-            name="role"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            options={ROLE_OPTIONS}
-            required
+            autoComplete="current-password"
           />
 
-          {error && (
-            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              {error.message || String(error)}
-            </div>
-          )}
+          <div aria-live="polite">
+            {error && (
+              <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                {loginErrorMessage(error)}
+              </div>
+            )}
+          </div>
 
-          <Button type="submit" variant="primary" className="w-full" loading={loading}>
-            Se connecter
+          <Button type="submit" variant="primary" className="w-full" loading={loading} disabled={loading}>
+            {loading ? 'Connexion…' : 'Se connecter'}
           </Button>
-
-
         </form>
-
-        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
-          <div className="flex items-start gap-3">
-            <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-sm text-blue-700" aria-hidden="true">i</span>
-            <div>
-              <p className="text-xs font-bold text-slate-700">Explorer les espaces</p>
-              <p className="mt-1 text-xs leading-5 text-slate-500">
-                Prévisualisation de développement — non sécurisée, sans connexion réelle.
-              </p>
-            </div>
-          </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {ROLE_OPTIONS.map((r) => (
-              <Button
-                key={r.value}
-                variant="secondary"
-                size="sm"
-                onClick={() => handlePreview(r.value)}
-              >
-                {r.label}
-              </Button>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   )

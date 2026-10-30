@@ -21,16 +21,23 @@ public class AuthService {
     public LoginResponse connecter(String login, String motDePasse) {
 
         // 1. Vérifier que les champs sont renseignés
-        if (login == null || login.isBlank()
-                || motDePasse == null || motDePasse.isBlank()) {
+        if (login == null || login.isBlank() || motDePasse == null || motDePasse.isBlank()) {
             throw new IllegalArgumentException(
                     "Le login et le mot de passe sont obligatoires."
             );
         }
 
         // 2. Rechercher le compte dans Oracle
-        Map<String, Object> utilisateur =
-                authRepository.trouverParLogin(login.trim());
+        Map<String, Object> utilisateur = authRepository.trouverParLogin(login.trim());
+        System.out.println("Utilisateur trouvé : " + (utilisateur != null));
+
+        if (utilisateur != null) {
+            System.out.println("Clés récupérées : " + utilisateur.keySet());
+            System.out.println("Login récupéré : " + utilisateur.get("LOGIN"));
+            System.out.println("Actif récupéré : " + utilisateur.get("ACTIF"));
+            System.out.println("Hash présent : " +
+                    (utilisateur.get("MOT_DE_PASS") != null));
+        }
 
         if (utilisateur == null) {
             throw new IllegalArgumentException(
@@ -58,8 +65,7 @@ public class AuthService {
 
         // 5. Construire la réponse sans exposer le hash
         Number id = (Number) utilisateur.get("ID");
-        Number matricule =
-                (Number) utilisateur.get("NUMERO_MATRICULE");
+        Number matricule = (Number) utilisateur.get("NUMERO_MATRICULE");
 
         return new LoginResponse(
                 id.longValue(),

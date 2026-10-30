@@ -1,4 +1,14 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+/**
+ * Base URL of the backend.
+ *
+ * In development this stays empty on purpose: requests are sent to the Vite
+ * dev server and proxied to Spring Boot (see vite.config.js), which avoids the
+ * CORS configuration the backend does not provide. Set VITE_API_BASE_URL when
+ * the frontend is deployed separately from the API.
+ */
+const BASE_URL = import.meta.env.DEV
+  ? ''
+  : (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
 export class ApiError extends Error {
   constructor(message, status, raw) {
@@ -41,15 +51,8 @@ function buildError(status, body) {
 }
 
 async function request(method, path, body) {
-  let url = `${BASE_URL}${path}`
-  let init = { method, headers: {}, credentials: 'include' }
-  if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
-    const csrfToken = document.cookie
-      .split('; ')
-      .find((cookie) => cookie.startsWith('XSRF-TOKEN='))
-      ?.slice('XSRF-TOKEN='.length)
-    if (csrfToken) init.headers['X-XSRF-TOKEN'] = decodeURIComponent(csrfToken)
-  }
+  const url = `${BASE_URL}${path}`
+  const init = { method, headers: {} }
 
   if (body !== undefined && body !== null) {
     init.headers['Content-Type'] = 'application/json'
@@ -70,6 +73,16 @@ async function request(method, path, body) {
   const data = await parseResponse(response)
 
   if (!response.ok) {
+    // The dev proxy answers 502/503/504 when it cannot reach Spring Boot.
+    const backendUnreachable =
+      [502, 503, 504].includes(response.status) && (data === null || data === '')
+    if (backendUnreachable) {
+      throw new ApiError(
+        'Impossible de joindre le serveur. Vérifiez que le backend est démarré et accessible.',
+        0,
+        data,
+      )
+    }
     throw buildError(response.status, data)
   }
 
@@ -81,7 +94,6 @@ export const api = {
   post: (path, body) => request('POST', path, body),
   put: (path, body) => request('PUT', path, body),
   baseUrl: BASE_URL,
-  currentUser: () => request('GET', '/auth/me'),
 }
 
 export default api

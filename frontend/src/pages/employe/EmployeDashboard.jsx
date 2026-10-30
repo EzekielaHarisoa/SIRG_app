@@ -10,7 +10,7 @@ import { formatCell } from '../../utils/format.js'
 import { SOLDE_CONGE_FIELDS as F } from '../../config/contracts.js'
 
 export default function EmployeDashboard() {
-  const { user, isPreview } = useAuth()
+  const { user } = useAuth()
   const [matricule, setMatricule] = useState('')
   const [solde, setSolde] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -38,12 +38,6 @@ export default function EmployeDashboard() {
         title="Tableau de bord"
         description="Bienvenue dans votre espace employé."
       />
-
-      {isPreview && (
-        <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
-          Vous êtes en mode prévisualisation. Aucune identité réelle n'est associée à cette session.
-        </div>
-      )}
 
       <div className="rounded-md border border-slate-200 bg-white p-5">
         <h2 className="text-sm font-semibold text-slate-700">Votre matricule</h2>
@@ -84,7 +78,7 @@ export default function EmployeDashboard() {
       )}
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <StatCard label="Utilisateur connecté" value={user?.nom || user?.login || '—'} />
+        <StatCard label="Utilisateur connecté" value={user?.nomEtPrenoms || user?.login || '—'} />
         <StatCard label="Rôle" value={user?.role || '—'} formatter={formatCell} />
       </div>
     </div>
