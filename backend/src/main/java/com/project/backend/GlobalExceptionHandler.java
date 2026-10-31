@@ -48,6 +48,27 @@ public class GlobalExceptionHandler {
                 .body(Map.of("erreur", e.getMessage()));
     }
 
+    // Règle métier non respectée (ordre des événements de pointage,
+    // chronologie, pointage déjà existant) : 409.
+    // Sans ce mapping, le handler générique ci-dessous renvoie 500 et
+    // masque la cause réelle à l'utilisateur.
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Map<String, String>> gererConflitMetier(
+            IllegalStateException e) {
+
+        String message = e.getMessage();
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(Map.of(
+                        "erreur",
+                        message == null || message.isBlank()
+                                ? "Cette opération n'est pas autorisée dans l'état actuel."
+                                : message
+                ));
+    }
+
     // Erreurs de validation du modèle : 400
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

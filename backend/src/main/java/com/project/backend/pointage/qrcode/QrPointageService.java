@@ -13,7 +13,7 @@ import java.util.HexFormat;
 @Service
 public class QrPointageService {
 
-    private static final int DUREE_VALIDITE_SECONDES = 60;
+    private static final int DUREE_VALIDITE_SECONDES = 300;
 
     private final QrPointageRepository repository;
     private final QrCodeGenerator qrCodeGenerator;

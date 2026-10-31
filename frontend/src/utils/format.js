@@ -51,6 +51,21 @@ export function formatDate(value) {
   return formatCell(value)
 }
 
+// Time part (HH:MM) of an ISO datetime such as "2026-10-31T08:05:00".
+export function formatHeure(value) {
+  if (!value) return '—'
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value)) {
+    return value.slice(11, 16)
+  }
+  return formatCell(value)
+}
+
+// Local calendar date as YYYY-MM-DD (never UTC-shifted).
+export function isoDateLocale(date = new Date()) {
+  const decale = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+  return decale.toISOString().slice(0, 10)
+}
+
 export function toTitle(name) {
   if (!name || typeof name !== 'string') return ''
   // camelCase -> spaces

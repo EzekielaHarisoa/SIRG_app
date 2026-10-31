@@ -63,11 +63,45 @@ export const SOLDE_CONGE_FIELDS = {
 }
 
 // ---- Pointage ----
+// Field names confirmed against com.project.backend.pointage.Pointage.
 export const POINTAGE_FIELDS = {
   numeroMatricule: 'numeroMatricule',
-  date: 'date',
-  heureArrivee: 'heureArrivee',
-  heureDepart: 'heureDepart',
+  datePointage: 'datePointage',
+  heureEntree: 'heureEntree',
+  heureSortie: 'heureSortie',
+  retardMinute: 'retardMinute',
+  heureSup: 'heureSup',
+}
+
+// ---- Événements de pointage QR ----
+// Values match com.project.backend.pointage.evenement.TypeEvenement.
+export const EVENEMENTS_POINTAGE = [
+  { value: 'ENTREE', label: 'Entrée', description: 'Arrivée au travail' },
+  { value: 'SORTIE_PAUSE', label: 'Départ en pause', description: 'Début de la pause' },
+  { value: 'RETOUR_PAUSE', label: 'Retour de pause', description: 'Fin de la pause' },
+  { value: 'SORTIE', label: 'Sortie', description: 'Fin de la journée' },
+]
+
+// Mirrors PointageEvenementService.verifierTransition. The backend stays the
+// authority: this only prevents offering an event the server would reject.
+export const TRANSITIONS_EVENEMENTS = {
+  ENTREE: ['SORTIE_PAUSE', 'SORTIE'],
+  SORTIE_PAUSE: ['RETOUR_PAUSE'],
+  RETOUR_PAUSE: ['SORTIE_PAUSE', 'SORTIE'],
+  SORTIE: [],
+}
+
+/**
+ * Events the employee can register after `dernierType` (null = nothing yet).
+ * Returns [] when the day is already closed by a SORTIE.
+ */
+export function evenementsAutorises(dernierType) {
+  if (!dernierType) return ['ENTREE']
+  return TRANSITIONS_EVENEMENTS[dernierType] || []
+}
+
+export function labelEvenement(type) {
+  return EVENEMENTS_POINTAGE.find((evenement) => evenement.value === type)?.label || type || '—'
 }
 
 // ---- Demande de congé ----
