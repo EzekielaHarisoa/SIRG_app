@@ -1,184 +1,219 @@
-import { useState } from 'react'
-import PageHeader from '../../components/ui/PageHeader.jsx'
-import FormField from '../../components/ui/FormField.jsx'
-import Button from '../../components/ui/Button.jsx'
-import StatCard from '../../components/ui/StatCard.jsx'
-import Modal from '../../components/ui/Modal.jsx'
-import {
-  getSoldeByMatricule,
-  getSoldeByMatriculeAndYear,
-  createSolde,
-  updateSolde,
-} from '../../services/soldeCongeService.js'
-import { SOLDE_CONGE_FIELDS as F } from '../../config/contracts.js'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
-const EMPTY_FORM = {
-  [F.numeroMatricule]: '',
-  [F.anne]: '',
-  [F.soldeAnnuel]: '',
-  [F.soldeMaladie]: '',
-  [F.joursPris]: '',
-}
+import PageHeader from '../../components/ui/PageHeader.jsx'
+import Button from '../../components/ui/Button.jsx'
+import FormField from '../../components/ui/FormField.jsx'
+import EmptyState from '../../components/ui/EmptyState.jsx'
+import SoldeCongesPanel from '../../components/conges/SoldeCongesPanel.jsx'
+
+import { getAllEmployes } from '../../services/employeService.js'
+import { getSoldeGlobal, initialiserTranches } from '../../services/soldeCongeService.js'
 
 export default function SoldesRHPage() {
   const [matricule, setMatricule] = useState('')
-  const [annee, setAnnee] = useState('')
+  const [matriculeActif, setMatriculeActif] = useState('')
   const [solde, setSolde] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [modalOpen, setModalOpen] = useState(false)
-  const [form, setForm] = useState({ ...EMPTY_FORM })
-  const [isEdit, setIsEdit] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [submitError, setSubmitError] = useState(null)
-  const [success, setSuccess] = useState(false)
 
-  const load = async (e) => {
-    e?.preventDefault()
-    if (!matricule) return
+  const [employes, setEmployes] = useState([])
+  const [initialisation, setInitialisation] = useState(false)
+  const initialisationRef = useRef(false)
+  const [message, setMessage] = useState(null)
+
+  useEffect(() => {
+    let annule = false
+    getAllEmployes()
+      .then((liste) => {
+        if (!annule && Array.isArray(liste)) setEmployes(liste)
+      })
+      .catch(() => {
+        /* la liste des noms est un confort d'affichage, pas une donnée critique */
+      })
+    return () => {
+      annule = true
+    }
+  }, [])
+
+  const nomEmploye = useMemo(() => {
+    if (!matriculeActif) return null
+    const trouve = employes.find((e) => String(e.numerMatricule) === String(matriculeActif))
+    return trouve?.nomEtPrenoms || null
+  }, [employes, matriculeActif])
+
+  const charger = async (numero) => {
+    const valeur = String(numero ?? '').trim()
+    if (!valeur) return
+
     setLoading(true)
     setError(null)
-    setSolde(null)
+    setMessage(null)
+    setMatriculeActif(valeur)
+
     try {
-      const data = annee
-        ? await getSoldeByMatriculeAndYear(matricule, annee)
-        : await getSoldeByMatricule(matricule)
+      const data = await getSoldeGlobal(valeur)
       setSolde(data)
     } catch (err) {
+      setSolde(null)
       setError(err)
     } finally {
       setLoading(false)
     }
   }
 
-  const openCreate = () => {
-    setIsEdit(false)
-    setForm({ ...EMPTY_FORM, [F.numeroMatricule]: matricule, [F.anne]: annee })
-    setSubmitError(null)
-    setSuccess(false)
-    setModalOpen(true)
-  }
-
-  const openEdit = () => {
-    if (!solde) return
-    setIsEdit(true)
-    setForm({
-      [F.numeroMatricule]: solde[F.numeroMatricule] ?? matricule,
-      [F.anne]: solde[F.anne] ?? annee,
-      [F.soldeAnnuel]: solde[F.soldeAnnuel] ?? '',
-      [F.soldeMaladie]: solde[F.soldeMaladie] ?? '',
-      [F.joursPris]: solde[F.joursPris] ?? '',
-    })
-    setSubmitError(null)
-    setSuccess(false)
-    setModalOpen(true)
-  }
-
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setForm((prev) => ({ ...prev, [name]: value }))
-  }
-
-  const handleSubmit = async (e) => {
+  const handleRechercher = (e) => {
     e.preventDefault()
-    setSubmitting(true)
-    setSubmitError(null)
-    setSuccess(false)
-    const payload = { ...form }
-    for (const k of [F.soldeAnnuel, F.soldeMaladie, F.joursPris, F.anne]) {
-      if (payload[k] !== '') {
-        const num = Number(payload[k])
-        payload[k] = Number.isNaN(num) ? payload[k] : num
-      }
-    }
+    charger(matricule)
+  }
+
+  const handleInitialiser = async () => {
+    if (!matriculeActif || initialisationRef.current) return
+    initialisationRef.current = true
+    setInitialisation(true)
+    setMessage(null)
+    setError(null)
+
     try {
-      if (isEdit) {
-        await updateSolde(payload)
-      } else {
-        await createSolde(payload)
-      }
-      setSuccess(true)
-      setModalOpen(false)
-      if (matricule) load()
+      await initialiserTranches(matriculeActif)
+      // `charger` remet le message à zéro : on l'affiche donc après le
+      // rafraîchissement du solde.
+      await charger(matriculeActif)
+      setMessage(
+        'Tranches initialisées pour le cycle courant. Les tranches déjà existantes ne sont pas dupliquées.',
+      )
     } catch (err) {
-      setSubmitError(err)
+      setError(err)
     } finally {
-      setSubmitting(false)
+      initialisationRef.current = false
+      setInitialisation(false)
     }
   }
+
+  const tranches = Array.isArray(solde?.tranches) ? solde.tranches : []
+  const aucuneTranche = !!solde && tranches.length === 0
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
         title="Soldes de congé"
-        description="Recherchez, consultez, créez et modifiez les soldes de congé par matricule."
+        description="Consultez le solde global et les tranches d’un employé, ou ouvrez ses tranches du cycle."
       />
 
-      {success && (
-        <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">
-          Opération effectuée avec succès.
-        </div>
-      )}
-
-      <form onSubmit={load} className="mb-4 flex flex-wrap items-end gap-3 rounded-md border border-slate-200 bg-white p-4">
-        <div className="min-w-[180px] flex-1">
-          <FormField label="Matricule" name="matricule" value={matricule} onChange={(e) => setMatricule(e.target.value)} required />
-        </div>
-        <div className="min-w-[140px] flex-1">
-          <FormField label="Année (optionnel)" name="annee" type="number" value={annee} onChange={(e) => setAnnee(e.target.value)} placeholder="Ex : 2026" />
+      <form
+        onSubmit={handleRechercher}
+        className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white px-5 py-4 sm:flex-row sm:items-end"
+      >
+        <div className="w-full sm:max-w-xs">
+          <FormField
+            label="Matricule de l’employé"
+            name="matricule"
+            type="number"
+            value={matricule}
+            onChange={(e) => setMatricule(e.target.value)}
+            placeholder="Ex : 61"
+            required
+          />
         </div>
         <Button type="submit" variant="primary" loading={loading}>
-          Rechercher
+          Consulter
         </Button>
-        <Button variant="secondary" onClick={openCreate}>
-          Créer un solde
-        </Button>
-        {solde && (
-          <Button variant="secondary" onClick={openEdit}>
-            Modifier
-          </Button>
-        )}
       </form>
 
+      {message && (
+        <div
+          role="status"
+          className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+        >
+          {message}
+        </div>
+      )}
+
       {error && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {error.message || String(error)}
+        <div
+          role="alert"
+          className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
+          <p className="font-medium">Opération impossible</p>
+          <p className="mt-1">{error.message || 'Erreur inconnue.'}</p>
         </div>
       )}
 
-      {solde && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCard label="Solde annuel" value={solde[F.soldeAnnuel]} />
-          <StatCard label="Solde maladie" value={solde[F.soldeMaladie]} />
-          <StatCard label="Jours pris" value={solde[F.joursPris]} />
-        </div>
-      )}
-
-      <Modal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title={isEdit ? 'Modifier un solde' : 'Créer un solde'}
-        size="md"
-      >
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <FormField label="Matricule" name={F.numeroMatricule} value={form[F.numeroMatricule]} onChange={handleChange} required disabled={isEdit} />
-          <FormField label="Année" name={F.anne} type="number" value={form[F.anne]} onChange={handleChange} required disabled={isEdit} />
-          <FormField label="Solde annuel" name={F.soldeAnnuel} type="number" value={form[F.soldeAnnuel]} onChange={handleChange} />
-          <FormField label="Solde maladie" name={F.soldeMaladie} type="number" value={form[F.soldeMaladie]} onChange={handleChange} />
-          <FormField label="Jours pris" name={F.joursPris} type="number" value={form[F.joursPris]} onChange={handleChange} />
-          {submitError && (
-            <p className="col-span-full text-sm text-red-600">{submitError.message || String(submitError)}</p>
-          )}
-          <div className="col-span-full flex justify-end gap-2">
-            <Button variant="secondary" onClick={() => setModalOpen(false)} disabled={submitting}>
-              Annuler
-            </Button>
-            <Button type="submit" variant="primary" loading={submitting}>
-              {isEdit ? 'Enregistrer' : 'Créer'}
-            </Button>
+      {!matriculeActif ? (
+        <EmptyState
+          label="Aucun employé sélectionné"
+          hint="Saisissez un matricule pour afficher son solde et ses tranches de congé."
+        />
+      ) : (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+          <div className="lg:col-span-3">
+            <SoldeCongesPanel
+              solde={solde}
+              loading={loading}
+              error={null}
+              title="Solde global"
+              description={`Employé ${matriculeActif}${nomEmploye ? ` — ${nomEmploye}` : ''}`}
+            />
           </div>
-        </form>
-      </Modal>
+
+          <div className="space-y-6 lg:col-span-2">
+            <section className="rounded-lg border border-slate-200 bg-white">
+              <header className="border-b border-slate-100 px-5 py-3.5">
+                <h2 className="text-sm font-semibold text-slate-900">Employé</h2>
+                <p className="mt-0.5 text-xs text-slate-500">Identité rattachée au matricule.</p>
+              </header>
+              <dl className="divide-y divide-slate-100 px-5">
+                <div className="flex items-center justify-between gap-3 py-2.5">
+                  <dt className="text-sm text-slate-500">Nom</dt>
+                  <dd className="text-sm font-medium text-slate-800">
+                    {nomEmploye || 'Employé sélectionné'}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-3 py-2.5">
+                  <dt className="text-sm text-slate-500">Matricule</dt>
+                  <dd className="text-sm font-medium tabular-nums text-slate-800">
+                    {matriculeActif}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-3 py-2.5">
+                  <dt className="text-sm text-slate-500">Tranches</dt>
+                  <dd className="text-sm font-medium tabular-nums text-slate-800">
+                    {loading ? '—' : tranches.length}
+                  </dd>
+                </div>
+              </dl>
+            </section>
+
+            <section className="rounded-lg border border-slate-200 bg-white">
+              <header className="border-b border-slate-100 px-5 py-3.5">
+                <h2 className="text-sm font-semibold text-slate-900">Cycle de congé</h2>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Ouverture des deux tranches de 15 jours.
+                </p>
+              </header>
+              <div className="space-y-3 px-5 py-4">
+                <Button
+                  variant="secondary"
+                  onClick={handleInitialiser}
+                  loading={initialisation}
+                  disabled={initialisation}
+                  className="w-full sm:w-auto"
+                >
+                  Initialiser les tranches
+                </Button>
+                <p className="text-xs text-slate-500">
+                  L’opération est sans effet si les tranches existent déjà. Elle est refusée tant que
+                  l’employé n’a pas atteint son premier anniversaire d’embauche.
+                </p>
+                {aucuneTranche && !loading && (
+                  <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                    Aucune tranche enregistrée pour cet employé.
+                  </p>
+                )}
+              </div>
+            </section>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

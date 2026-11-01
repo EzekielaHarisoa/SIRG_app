@@ -1,86 +1,93 @@
-import { useState } from 'react'
+import { Link } from 'react-router-dom'
+
 import { useAuth } from '../../context/AuthContext.jsx'
 import PageHeader from '../../components/ui/PageHeader.jsx'
-import StatCard from '../../components/ui/StatCard.jsx'
-import FormField from '../../components/ui/FormField.jsx'
-import Button from '../../components/ui/Button.jsx'
-import { getSoldeByMatricule } from '../../services/soldeCongeService.js'
-import { ApiError } from '../../services/api.js'
-import { formatCell } from '../../utils/format.js'
-import { SOLDE_CONGE_FIELDS as F } from '../../config/contracts.js'
+import LoadingState from '../../components/ui/LoadingState.jsx'
+import ErrorState from '../../components/ui/ErrorState.jsx'
+import { useApi } from '../../hooks/useApi.js'
+import { getSoldeGlobal } from '../../services/soldeCongeService.js'
+
+const NOMBRE = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 })
+
+function jours(valeur) {
+  if (valeur === null || valeur === undefined || Number.isNaN(Number(valeur))) return '—'
+  return NOMBRE.format(Number(valeur))
+}
+
+function Metric({ label, value, suffix }) {
+  return (
+    <div className="px-4 py-3.5">
+      <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 text-2xl font-semibold tabular-nums text-slate-900">
+        {value}
+        {suffix && <span className="ml-1 text-sm font-normal text-slate-500">{suffix}</span>}
+      </p>
+    </div>
+  )
+}
 
 export default function EmployeDashboard() {
   const { user } = useAuth()
-  const [matricule, setMatricule] = useState('')
-  const [solde, setSolde] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const matricule = user?.numeroMatricule ?? null
 
-  const loadSolde = async (e) => {
-    e?.preventDefault()
-    if (!matricule) return
-    setLoading(true)
-    setError(null)
-    try {
-      const data = await getSoldeByMatricule(matricule)
-      setSolde(data)
-    } catch (err) {
-      setError(err)
-      setSolde(null)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { data, error, loading, refetch } = useApi(
+    () => (matricule ? getSoldeGlobal(matricule) : Promise.resolve(null)),
+    [matricule],
+  )
 
   return (
-    <div>
-      <PageHeader
-        title="Tableau de bord"
-        description="Bienvenue dans votre espace employé."
-      />
+    <div className="space-y-6">
+      <PageHeader title="Tableau de bord" description="Bienvenue dans votre espace employé." />
 
-      <div className="rounded-md border border-slate-200 bg-white p-5">
-        <h2 className="text-sm font-semibold text-slate-700">Votre matricule</h2>
-        <p className="mt-1 text-xs text-slate-500">
-          Lidentité employé nétant pas vérifiée par le backend, indiquez votre matricule pour
-          consulter vos informations personnelles.
-        </p>
-        <form onSubmit={loadSolde} className="mt-4 flex flex-wrap items-end gap-3">
-          <div className="min-w-[200px] flex-1">
-            <FormField
-              label="Matricule"
-              name="matricule"
-              value={matricule}
-              onChange={(e) => setMatricule(e.target.value)}
-              placeholder="Ex : 1001"
-            />
+      <section className="flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3">
+        <div>
+          <p className="text-sm font-semibold text-slate-900">
+            {user?.nomEtPrenoms || user?.login || 'Utilisateur'}
+          </p>
+          <p className="mt-0.5 text-xs text-slate-500">
+            {matricule ? `Matricule ${matricule}` : 'Matricule indisponible'}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link
+            to="/employe/conges"
+            className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Mes congés
+          </Link>
+          <Link
+            to="/employe/solde"
+            className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
+          >
+            Mon solde
+          </Link>
+        </div>
+      </section>
+
+      {!matricule ? (
+        <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          Votre profil ne contient pas de numéro matricule : vos informations personnelles sont
+          indisponibles. Contactez le service RH pour rattacher votre compte à un employé.
+        </div>
+      ) : loading ? (
+        <LoadingState label="Chargement de votre solde…" />
+      ) : error ? (
+        <ErrorState error={error} onRetry={refetch} />
+      ) : (
+        <section className="rounded-lg border border-slate-200 bg-white">
+          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+            <h2 className="text-sm font-semibold text-slate-900">Congés</h2>
+            <Link to="/employe/solde" className="text-xs font-medium text-blue-700 hover:underline">
+              Voir le détail des tranches
+            </Link>
           </div>
-          <Button type="submit" variant="primary" loading={loading}>
-            Consulter mon solde
-          </Button>
-        </form>
-      </div>
-
-      {error && (
-        <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {error instanceof ApiError && error.status === 0
-            ? 'Backend injoignable. Vérifiez que le serveur Spring Boot est démarré.'
-            : error.message || String(error)}
-        </div>
+          <div className="grid grid-cols-1 divide-y divide-slate-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+            <Metric label="Jours restants" value={jours(data?.totalJoursRestants)} suffix="jours" />
+            <Metric label="Jours acquis" value={jours(data?.totalJoursAcquis)} suffix="jours" />
+            <Metric label="Jours consommés" value={jours(data?.totalJoursConsommes)} suffix="jours" />
+          </div>
+        </section>
       )}
-
-      {solde && (
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCard label="Solde annuel" value={solde[F.soldeAnnuel]} />
-          <StatCard label="Solde maladie" value={solde[F.soldeMaladie]} />
-          <StatCard label="Jours pris" value={solde[F.joursPris]} />
-        </div>
-      )}
-
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <StatCard label="Utilisateur connecté" value={user?.nomEtPrenoms || user?.login || '—'} />
-        <StatCard label="Rôle" value={user?.role || '—'} formatter={formatCell} />
-      </div>
     </div>
   )
 }

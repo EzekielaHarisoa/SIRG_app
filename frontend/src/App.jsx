@@ -19,8 +19,7 @@ import PointagesRHPage from './pages/rh/PointagesRHPage.jsx'
 import CongesRHPage from './pages/rh/CongesRHPage.jsx'
 import SoldesRHPage from './pages/rh/SoldesRHPage.jsx'
 
-import ComptableDashboard from './pages/comptable/ComptableDashboard.jsx'
-import BulletinsPage from './pages/comptable/BulletinsPage.jsx'
+import PaieRHPage from './pages/rh/PaieRHPage.jsx'
 
 function HomeRedirect() {
   const { isAuthenticated, role } = useAuth()
@@ -65,6 +64,7 @@ export default function App() {
         <Route path="pointages" element={<PointagesRHPage />} />
         <Route path="conges" element={<CongesRHPage />} />
         <Route path="soldes" element={<SoldesRHPage />} />
+        <Route path="paie" element={<PaieRHPage />} />
       </Route>
 
       {/* Comptable */}
@@ -76,8 +76,7 @@ export default function App() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<ComptableDashboard />} />
-        <Route path="bulletins" element={<BulletinsPage />} />
+        <Route path="bulletins" element={<MesBulletinsPage />} />
       </Route>
 
       <Route path="*" element={<UnavailablePage title="Page introuvable" reason="Cette page nexiste pas." />} />

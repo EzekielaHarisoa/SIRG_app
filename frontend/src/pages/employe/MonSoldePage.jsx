@@ -1,68 +1,93 @@
-import { useState } from 'react'
+import { useAuth } from '../../context/AuthContext.jsx'
 import PageHeader from '../../components/ui/PageHeader.jsx'
-import FormField from '../../components/ui/FormField.jsx'
+import IdentityStrip from '../../components/ui/IdentityStrip.jsx'
 import Button from '../../components/ui/Button.jsx'
-import StatCard from '../../components/ui/StatCard.jsx'
-import { getSoldeByMatricule, getSoldeByMatriculeAndYear } from '../../services/soldeCongeService.js'
-import { SOLDE_CONGE_FIELDS as F } from '../../config/contracts.js'
+import SoldeCongesPanel from '../../components/conges/SoldeCongesPanel.jsx'
+import { useApi } from '../../hooks/useApi.js'
+import { getSoldeGlobal } from '../../services/soldeCongeService.js'
+
+const REGLES = [
+  '2,5 jours acquis par mois travaillé.',
+  'Deux tranches de 15 jours ouvertes à chaque anniversaire d’embauche.',
+  'La première tranche est consommée en priorité et expire après 3 mois.',
+  'La deuxième tranche reste valable 3 ans.',
+  'Les congés payés ne sont disponibles qu’après le premier anniversaire d’embauche.',
+]
 
 export default function MonSoldePage() {
-  const [matricule, setMatricule] = useState('')
-  const [annee, setAnnee] = useState('')
-  const [solde, setSolde] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const { user } = useAuth()
+  const matricule = user?.numeroMatricule ?? null
 
-  const load = async (e) => {
-    e?.preventDefault()
-    if (!matricule) return
-    setLoading(true)
-    setError(null)
-    setSolde(null)
-    try {
-      const data = annee
-        ? await getSoldeByMatriculeAndYear(matricule, annee)
-        : await getSoldeByMatricule(matricule)
-      setSolde(data)
-    } catch (err) {
-      setError(err)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { data, error, loading, refetch } = useApi(
+    () => (matricule ? getSoldeGlobal(matricule) : Promise.resolve(null)),
+    [matricule],
+  )
 
   return (
-    <div>
-      <PageHeader title="Mon solde de congé" description="Consultez votre solde de congé par matricule." />
+    <div className="space-y-6">
+      <PageHeader
+        title="Mon solde de congé"
+        description="Solde calculé par le serveur à partir de vos tranches et de vos consommations."
+        actions={
+          <Button variant="secondary" onClick={refetch} loading={loading}>
+            Actualiser
+          </Button>
+        }
+      />
 
-      <p className="mb-4 rounded-md border border-slate-200 bg-white p-3 text-xs text-slate-500">
-        Lidentité employé nétant pas vérifiée par le backend, saisissez votre matricule pour
-        consulter votre propre solde.
-      </p>
+      <IdentityStrip
+        title={user?.nomEtPrenoms || user?.login || 'Utilisateur'}
+        meta={matricule ? `Matricule ${matricule}` : 'Matricule indisponible'}
+        aside={
+          <span className="text-xs tabular-nums text-slate-500">
+            {loading ? 'Mise à jour…' : 'À jour'}
+          </span>
+        }
+      />
 
-      <form onSubmit={load} className="mb-6 flex flex-wrap items-end gap-3 rounded-md border border-slate-200 bg-white p-4">
-        <div className="min-w-[180px] flex-1">
-          <FormField label="Matricule" name="matricule" value={matricule} onChange={(e) => setMatricule(e.target.value)} required />
+      {!matricule ? (
+        <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          Votre profil ne contient pas de numéro matricule : le solde est indisponible. Contactez le
+          service RH pour rattacher votre compte à un employé.
         </div>
-        <div className="min-w-[140px] flex-1">
-          <FormField label="Année (optionnel)" name="annee" type="number" value={annee} onChange={(e) => setAnnee(e.target.value)} placeholder="Ex : 2026" />
-        </div>
-        <Button type="submit" variant="primary" loading={loading}>
-          Consulter
-        </Button>
-      </form>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+          <div className="lg:col-span-3">
+            <SoldeCongesPanel
+              solde={data}
+              loading={loading}
+              error={error}
+              title="Solde global"
+              description="Agrégat de vos tranches, actives comme expirées."
+            />
+          </div>
 
-      {error && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {error.message || String(error)}
-        </div>
-      )}
+          <div className="lg:col-span-2">
+            <section className="rounded-lg border border-slate-200 bg-white">
+              <header className="border-b border-slate-100 px-5 py-3.5">
+                <h2 className="text-sm font-semibold text-slate-900">Comment le solde est calculé</h2>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Règles appliquées par le serveur, jamais recalculées par l’interface.
+                </p>
+              </header>
 
-      {solde && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCard label="Solde annuel" value={solde[F.soldeAnnuel]} />
-          <StatCard label="Solde maladie" value={solde[F.soldeMaladie]} />
-          <StatCard label="Jours pris" value={solde[F.joursPris]} />
+              <ul className="divide-y divide-slate-100 px-5">
+                {REGLES.map((regle) => (
+                  <li key={regle} className="flex gap-2.5 py-2.5 text-sm text-slate-600">
+                    <span
+                      aria-hidden="true"
+                      className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-slate-400"
+                    />
+                    {regle}
+                  </li>
+                ))}
+              </ul>
+
+              <p className="border-t border-slate-100 px-5 py-3 text-xs text-slate-500">
+                Une demande n’est décomptée qu’au moment de son acceptation par le responsable RH.
+              </p>
+            </section>
+          </div>
         </div>
       )}
     </div>

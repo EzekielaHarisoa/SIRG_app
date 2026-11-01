@@ -6,7 +6,14 @@ import { defineConfig } from 'vite'
 // The backend does not send CORS headers, so the dev server forwards these
 // prefixes to Spring Boot to keep browser calls same-origin.
 const BACKEND_URL = 'http://localhost:8080'
-const BACKEND_PREFIXES = ['/api', '/employe', '/pointage', '/soldeConge', '/demandeConge']
+const BACKEND_PREFIXES = [
+  '/api',
+  '/employe',
+  '/pointage',
+  '/soldeConge',
+  '/demandeConge',
+  '/tranches-conge',
+]
 
 // `/employe` is both an API prefix and an application route: page navigations
 // must reach the SPA instead of the backend.

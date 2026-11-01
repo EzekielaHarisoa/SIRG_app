@@ -54,12 +54,71 @@ export const EMPLOYE_FIELDS = {
 }
 
 // ---- Solde de congé ----
+// Confirmed against com.project.backend.conge.soldeConge.SoldeCongeDTO and
+// com.project.backend.conge.TrancheConge.TrancheCongeSoldeDTO.
+// GET /tranches-conge/solde/{numeroMatricule} returns the aggregate + `tranches`.
 export const SOLDE_CONGE_FIELDS = {
   numeroMatricule: 'numeroMatricule',
-  anne: 'anne',
-  soldeAnnuel: 'soldeAnnuel',
-  soldeMaladie: 'soldeMaladie',
-  joursPris: 'joursPris',
+  totalJoursAcquis: 'totalJoursAcquis',
+  totalJoursConsommes: 'totalJoursConsommes',
+  totalJoursRestants: 'totalJoursRestants',
+  tranches: 'tranches',
+}
+
+// One row of GET /tranches-conge/employe/{numeroMatricule}.
+export const TRANCHE_CONGE_FIELDS = {
+  id: 'id',
+  anneeCycle: 'anneeCycle',
+  typeTranche: 'typeTranche',
+  dateOuverture: 'dateOuverture',
+  dateExpiration: 'dateExpiration',
+  joursAcquis: 'joursAcquis',
+  joursConsommes: 'joursConsommes',
+  joursRestants: 'joursRestants',
+  statut: 'statut',
+}
+
+// PREMIERE = 15 jours valables 3 mois, DEUXIEME = 15 jours valables 3 ans.
+export const TYPE_TRANCHE_LABELS = {
+  PREMIERE: 'Première tranche',
+  DEUXIEME: 'Deuxième tranche',
+}
+
+// Statuts réellement utilisés par le backend (DemandeConge.status).
+export const STATUTS_DEMANDE = {
+  EN_ATTENTE: { value: 'EN_ATTENTE', label: 'En attente', tone: 'warning' },
+  ACCEPTER: { value: 'ACCEPTER', label: 'Acceptée', tone: 'success' },
+  REFUSER: { value: 'REFUSER', label: 'Refusée', tone: 'danger' },
+}
+
+export const STATUT_OPTIONS = Object.values(STATUTS_DEMANDE).map(({ value, label }) => ({
+  value,
+  label,
+}))
+
+export function labelStatutDemande(status) {
+  return STATUTS_DEMANDE[status]?.label || status || '—'
+}
+
+// Active/expired state of a tranche.
+export const STATUTS_TRANCHE = {
+  ACTIVE: { label: 'Active', tone: 'success' },
+  EXPIREE: { label: 'Expirée', tone: 'neutral' },
+}
+
+// Mirrors DemandeCongeService.TYPES_CONGE_AUTORISES.
+export const TYPES_CONGE = [
+  { value: 'CONGE_PAYE', label: 'Congé payé', description: 'Décompté des tranches de congé.' },
+  { value: 'MALADIE', label: 'Congé maladie', description: 'Absence pour raison médicale.' },
+  { value: 'MATERNITE', label: 'Congé maternité', description: 'Absence liée à une naissance.' },
+  { value: 'PATERNITE', label: 'Congé paternité', description: 'Absence liée à une naissance.' },
+  { value: 'PERMISSION', label: 'Permission', description: 'Absence courte autorisée.' },
+]
+
+export const TYPE_CONGE_OPTIONS = TYPES_CONGE.map(({ value, label }) => ({ value, label }))
+
+export function labelTypeConge(type) {
+  return TYPES_CONGE.find((t) => t.value === type)?.label || type || '—'
 }
 
 // ---- Pointage ----
@@ -105,12 +164,18 @@ export function labelEvenement(type) {
 }
 
 // ---- Demande de congé ----
+// Confirmed against com.project.backend.conge.DemandeConge:
+// the first day is `dateDeDebut` (not `dateDebut`).
 export const DEMANDE_CONGE_FIELDS = {
+  id: 'id',
   numeroMatricule: 'numeroMatricule',
-  dateDebut: 'dateDebut',
+  dateDeDebut: 'dateDeDebut',
   dateFin: 'dateFin',
   typeConge: 'typeConge',
   motif: 'motif',
+  status: 'status',
+  motifRefus: 'motifRefus',
+  dateDeDemande: 'dateDeDemande',
 }
 
 // ---- Bulletin de paie ----
@@ -127,8 +192,8 @@ export const BULLETIN_FIELDS = {
 // Fields marked CONFIRMED have been verified against the OpenAPI doc.
 export const CONTRACT_STATUS = {
   EMPLOYE: 'ASSUMED',
-  SOLDE_CONGE: 'ASSUMED',
+  SOLDE_CONGE: 'CONFIRMED',
   POINTAGE: 'ASSUMED',
-  DEMANDE_CONGE: 'ASSUMED',
+  DEMANDE_CONGE: 'CONFIRMED',
   BULLETIN: 'ASSUMED',
 }

@@ -44,6 +44,11 @@ function buildError(status, body) {
   } else if (typeof body === 'string' && body.trim()) {
     message = body.trim()
   }
+  // The backend returns field-level errors in `details`; surface the first one
+  // so the user reads the actual rule instead of a generic message.
+  if (Array.isArray(body?.details) && body.details.length > 0) {
+    message = `${message || 'Données invalides'} : ${body.details[0]}`
+  }
   if (!message) {
     message = `Erreur HTTP ${status}`
   }
@@ -62,7 +67,7 @@ async function request(method, path, body) {
   let response
   try {
     response = await fetch(url, init)
-  } catch (networkError) {
+  } catch {
     throw new ApiError(
       'Impossible de joindre le serveur. Vérifiez que le backend est démarré et accessible.',
       0,
@@ -93,6 +98,8 @@ export const api = {
   get: (path) => request('GET', path),
   post: (path, body) => request('POST', path, body),
   put: (path, body) => request('PUT', path, body),
+  // Used by the congé decisions (acceptation / refus).
+  patch: (path, body) => request('PATCH', path, body),
   baseUrl: BASE_URL,
 }
 
