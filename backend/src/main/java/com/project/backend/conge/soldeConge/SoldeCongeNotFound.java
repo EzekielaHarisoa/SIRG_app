@@ -1,4 +1,4 @@
-package com.project.backend.conge;
+package com.project.backend.conge.soldeConge;
 
 public class SoldeCongeNotFound extends RuntimeException {
     public SoldeCongeNotFound(long numeroMatricule) {
