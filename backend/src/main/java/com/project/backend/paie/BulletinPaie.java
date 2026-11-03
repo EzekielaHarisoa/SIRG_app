@@ -109,6 +109,16 @@ public class BulletinPaie {
         return numeroMatricule;
     }
 
+    /** Mois de la période de paie, déduit de la date d'émission (lecture seule). */
+    public Integer getMois() {
+        return dateEmission != null ? dateEmission.getMonthValue() : null;
+    }
+
+    /** Année de la période de paie, déduite de la date d'émission (lecture seule). */
+    public Integer getAnne() {
+        return dateEmission != null ? dateEmission.getYear() : null;
+    }
+
     public void setNumeroMatricule(Long numeroMatricule) {
         this.numeroMatricule = numeroMatricule;
     }
