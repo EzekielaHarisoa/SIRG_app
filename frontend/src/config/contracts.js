@@ -41,18 +41,14 @@ export const AUTH_FIELDS = {
 
 // ---- Employé ----
 export const EMPLOYE_FIELDS = {
-  // ASSUMED — confirm against OpenAPI /employe POST & PUT bodies.
-  numeroMatricule: 'numeroMatricule',
-  nom: 'nom',
-  prenom: 'prenom',
-  email: 'email',
+  numeroMatricule: 'numerMatricule',
+  nomEtPrenoms: 'nomEtPrenoms',
   telephone: 'telephone',
+  adresse: 'adresse',
   dateEmbauche: 'dateEmbauche',
-  poste: 'poste',
-  salaireBase: 'salaireBase',
-  departement: 'departement',
+  entrepriseId: 'entrepriseId',
+  posteId: 'posteId',
 }
-
 // ---- Solde de congé ----
 // Confirmed against com.project.backend.conge.soldeConge.SoldeCongeDTO and
 // com.project.backend.conge.TrancheConge.TrancheCongeSoldeDTO.

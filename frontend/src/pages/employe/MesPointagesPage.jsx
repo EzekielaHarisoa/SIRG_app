@@ -218,9 +218,21 @@ export default function MesPointagesPage() {
 
       setEtape('choix')
     } catch (err) {
+      console.error('Erreur lors de la vérification du QR code :', err)
+
+      // Pendant le développement, une erreur non gérée masque la raison du
+      // problème. On affiche donc un message explicite dans la console et dans
+      // l'interface même lorsque l'objet n'est pas un ApiError connu.
+      const messageUtilisateur =
+        err instanceof Error ? err.message : typeof err === 'object' && err ? String(err) : 'Une erreur est survenue'
       setEtape('repos')
       setToken('')
-      setMessage({ type: 'error', ...messageErreurPointage(err) })
+      setMessage(
+        {
+          type: 'error',
+          texte: messageUtilisateur,
+        },
+      )
     }
   }, [])
 

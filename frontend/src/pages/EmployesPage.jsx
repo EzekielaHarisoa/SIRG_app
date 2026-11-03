@@ -1,16 +1,20 @@
 import { useState } from 'react'
 import PageHeader from '../components/ui/PageHeader.jsx'
 import Button from '../components/ui/Button.jsx'
-import AsyncBoundary from '../components/ui/AsyncBoundary.jsx'
 import DataTable from '../components/ui/DataTable.jsx'
 import EmployeFormModal from '../components/employes/Modal.jsx'
 import { useApi } from '../hooks/useApi.js'
 import { getAllEmployes, createEmploye, updateEmploye } from '../services/employeService.js'
 import { EMPLOYE_FIELDS as F } from '../config/contracts.js'
-import { formatCell } from '../utils/format.js'
 
 export default function EmployesPage() {
   const { data, error, loading, refetch } = useApi(() => getAllEmployes(), [])
+
+  const rows = Array.isArray(data) ? data : []
+console.log("Données reçues :", data)
+console.log("Est un tableau :", Array.isArray(data))
+console.log("Nombre d'employés :", rows.length)
+console.log("Erreur :", error)
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [submitError, setSubmitError] = useState(null)
@@ -51,26 +55,48 @@ export default function EmployesPage() {
     }
   }
 
-  const columns = [
-    { key: F.numeroMatricule, label: 'Matricule' },
-    { key: F.nom },
-    { key: F.prenom, label: 'Prénom' },
-    { key: F.poste },
-    { key: F.departement, label: 'Département' },
-    { key: F.email },
-    {
-      key: 'actions',
-      label: 'Actions',
-      render: (_v, row) => (
-        <Button variant="ghost" size="sm" onClick={() => openEdit(row)}>
-          Modifier
+const columns = [
+  { key: F.numeroMatricule, label: 'Matricule' },
+  { key: F.nomEtPrenoms, label: 'Nom et prénoms' },
+  { key: F.telephone, label: 'Téléphone' },
+  { key: F.adresse, label: 'Adresse' },
+  { key: F.dateEmbauche, label: "Date d'embauche"},
+  { key: F.entrepriseId, label: 'Entreprise' },
+  { key: F.posteId, label: 'Poste' },
+  {
+    key: 'actions',
+    label: 'Actions',
+    render: (_v, row) => (
+      <Button variant="ghost" size="sm" onClick={() => openEdit(row)}>
+        Modifier
+      </Button>
+    ),
+  },
+]
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-3 border border-slate-200 bg-white px-4 py-3">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-500" />
+        <p className="text-sm text-slate-600">Chargement de la liste des employés…</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm">
+        <p className="font-medium text-red-800">Impossible d'afficher les employés</p>
+        <p className="mt-1 text-red-700">{error.message || 'Erreur inconnue.'}</p>
+        <Button variant="secondary" className="mt-3" onClick={refetch}>
+          Réessayer
         </Button>
-      ),
-    },
-  ]
+      </div>
+    )
+  }
 
   return (
-    <div>
+    <div className="space-y-5">
       <PageHeader
         title="Employés"
         description="Gérez les employés : consultation, création et modification."
@@ -78,20 +104,28 @@ export default function EmployesPage() {
       />
 
       {success && (
-        <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+        <div className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">
           Opération effectuée avec succès.
         </div>
       )}
 
-      <AsyncBoundary
-        loading={loading}
-        error={error}
-        data={data}
-        onRetry={refetch}
-        emptyLabel="Aucun employé enregistré."
-      >
-        {(rows) => <DataTable columns={columns} rows={rows} rowKey={F.numeroMatricule} />}
-      </AsyncBoundary>
+      <div className="min-w-0">
+        {Array.isArray(rows) && rows.length === 0 ? (
+          <div className="rounded-md border border-dashed border-slate-300 bg-white p-8 text-center">
+            <p className="text-sm text-slate-500">Aucun employé enregistré.</p>
+            <p className="mt-1 text-xs text-slate-400">
+              Utilisez le bouton « Nouvel employé » pour en créer un.
+            </p>
+          </div>
+        ) : (
+          <DataTable
+            columns={columns}
+            rows={rows}
+            rowKey={F.numeroMatricule}
+            emptyLabel="Aucun employé enregistré."
+          />
+        )}
+      </div>
 
       <EmployeFormModal
         open={modalOpen}

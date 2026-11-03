@@ -1,20 +1,25 @@
+/*
+ * Palette de la page de connexion, petits arrondis (rounded-sm) :
+ *  #005EB8 bleu (action principale)   #00449E marine (survol / texte sur teinte)
+ *  #E3EEFC teinte (fond clair)        gris (slate) pour tout le reste
+ */
 const VARIANTS = {
   primary:
-    'bg-blue-600 text-white hover:bg-blue-700 focus-visible:outline-blue-500 border border-transparent',
+    'border border-transparent bg-[#005EB8] text-white hover:bg-[#00449E] active:bg-[#003A87] focus-visible:outline-[#005EB8]',
   secondary:
-    'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 focus-visible:outline-slate-400',
+    'border border-slate-300 bg-white text-slate-800 hover:bg-slate-50 active:bg-slate-100 focus-visible:outline-[#005EB8]',
   accent:
-    'bg-blue-600 text-white hover:bg-blue-700 focus-visible:outline-blue-600 border border-transparent',
+    'border border-[#005EB8]/30 bg-[#E3EEFC] text-[#00449E] hover:bg-[#D2E3F9] active:bg-[#C2D9F5] focus-visible:outline-[#005EB8]',
   danger:
-    'bg-red-600 text-white hover:bg-red-500 focus-visible:outline-red-600 border border-transparent',
+    'border border-transparent bg-red-700 text-white hover:bg-red-800 active:bg-red-900 focus-visible:outline-red-700',
   ghost:
-    'bg-transparent text-slate-600 border border-transparent hover:bg-slate-100 focus-visible:outline-slate-400',
+    'border border-transparent bg-transparent text-slate-700 hover:bg-slate-100 active:bg-slate-200 focus-visible:outline-[#005EB8]',
 }
 
 const SIZES = {
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-4 py-2 text-sm',
-  lg: 'px-5 py-2.5 text-base',
+  sm: 'min-h-7 px-2.5 py-1 text-xs leading-5',
+  md: 'min-h-9 px-3.5 py-1.5 text-[13px] leading-5',
+  lg: 'min-h-10 px-4 py-2 text-sm leading-5',
 }
 
 export default function Button({
@@ -34,10 +39,11 @@ export default function Button({
     <button
       type={type}
       disabled={isDisabled}
+      aria-busy={loading || undefined}
       className={[
-        'inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors',
+        'inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-sm font-semibold transition-colors',
         'focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2',
-        'disabled:cursor-not-allowed disabled:opacity-60',
+        'disabled:cursor-not-allowed disabled:opacity-50',
         variantClass,
         sizeClass,
         className,
