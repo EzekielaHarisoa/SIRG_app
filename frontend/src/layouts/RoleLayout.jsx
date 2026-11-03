@@ -4,6 +4,19 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { ROLE_LABELS } from '../config/contracts.js'
 import { roleHomePath } from '../components/layout/ProtectedRoute.jsx'
 
+/*
+ * Palette reprise de la page de connexion :
+ *  - BLEU  #005EB8 : bouton "Se connecter", logo, repère du lien actif
+ *  - MARINE #00449E : texte sur fond bleu clair (lien actif, initiales)
+ *  - TEINTE #E3EEFC : fond des champs de connexion, fond du lien actif
+ * Tout le reste reste en gris (slate).
+ */
+const BLEU = '#005EB8'
+const MARINE = '#00449E'
+const TEINTE = '#E3EEFC'
+
+const FOCUS = 'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#005EB8]/40'
+
 const MENU = {
   EMPLOYE: {
     home: '/employe',
@@ -25,6 +38,7 @@ const MENU = {
       { to: '/rh/pointages', label: 'Pointages', icon: 'clock' },
       { to: '/rh/conges', label: 'Congés', icon: 'calendar' },
       { to: '/rh/soldes', label: 'Soldes de congé', icon: 'wallet' },
+      { to: '/rh/paie', label: 'Paie', icon: 'document' },
     ],
   },
   COMPTABLE: {
@@ -48,6 +62,29 @@ const ICONS = {
 
 function NavIcon({ name }) {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px] shrink-0">{ICONS[name]}</svg>
+}
+
+/* Logo : même marque que sur la page de connexion (3 carrés + 1 losange) */
+function LogoMark() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-7 w-7 shrink-0">
+      <rect x="1" y="1" width="10" height="10" rx="2" fill={BLEU} />
+      <rect x="1" y="13" width="10" height="10" rx="2" fill={BLEU} />
+      <rect x="13" y="13" width="10" height="10" rx="2" fill={BLEU} />
+      <rect x="14.5" y="2.5" width="7" height="7" rx="1.2" transform="rotate(45 18 6)" fill="#7FB2EC" />
+    </svg>
+  )
+}
+
+function Avatar({ name }) {
+  return (
+    <div
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
+      style={{ backgroundColor: TEINTE, color: MARINE }}
+    >
+      {initials(name)}
+    </div>
+  )
 }
 
 function initials(name) {
@@ -79,10 +116,11 @@ export default function RoleLayout({ children }) {
           end={link.end}
           onClick={() => setMenuOpen(false)}
           className={({ isActive }) => [
-            'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+            'flex items-center gap-3 rounded-sm px-3 py-2 text-sm transition-colors',
+            FOCUS,
             isActive
-              ? 'bg-blue-50 text-blue-700'
-              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+              ? 'bg-[#E3EEFC] font-semibold text-[#00449E]'
+              : 'font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900',
           ].join(' ')}
         >
           <NavIcon name={link.icon} />
@@ -93,34 +131,37 @@ export default function RoleLayout({ children }) {
   )
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 antialiased print:bg-white">
       {menuOpen && (
         <button
           type="button"
-          className="fixed inset-0 z-30 bg-slate-900/40 md:hidden"
+          className="fixed inset-0 z-30 bg-slate-900/40 md:hidden print:hidden"
           onClick={() => setMenuOpen(false)}
           aria-label="Fermer la navigation"
         />
       )}
 
-      <aside className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-slate-200 bg-white transition-transform duration-200 md:translate-x-0 ${menuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-slate-200 bg-white transition-transform duration-200 md:translate-x-0 print:hidden ${menuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex h-16 items-center justify-between border-b border-slate-200 px-5">
-          <div>
-            <p className="text-lg font-semibold tracking-tight text-slate-900">SIRG</p>
-            <p className="text-[11px] text-slate-500">Gestion des ressources humaines</p>
+          <div className="flex items-center gap-2.5">
+            <LogoMark />
+            <div>
+              <p className="text-lg font-semibold leading-5 tracking-tight text-slate-900">SIRG</p>
+              <p className="text-xs leading-4 text-slate-500">Gestion des ressources humaines</p>
+            </div>
           </div>
           <button
             type="button"
             onClick={() => setMenuOpen(false)}
-            className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 md:hidden"
+            className={`rounded-sm p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-800 md:hidden ${FOCUS}`}
             aria-label="Fermer la navigation"
           >
             <span aria-hidden="true" className="text-xl leading-none">×</span>
           </button>
         </div>
 
-        <div className="border-b border-slate-100 px-5 py-3">
-          <p className="text-xs font-medium text-slate-500">{config.title}</p>
+        <div className="border-b border-slate-200 px-5 py-3">
+          <p className="text-[13px] font-semibold text-slate-700">{config.title}</p>
         </div>
 
         <div className="flex-1 overflow-y-auto px-3 py-4">
@@ -129,50 +170,50 @@ export default function RoleLayout({ children }) {
 
         <div className="border-t border-slate-200 px-4 py-3">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs font-semibold text-blue-700">{initials(displayName)}</div>
+            <Avatar name={displayName} />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-slate-800">{displayName}</p>
-              <p className="truncate text-xs text-slate-500">{ROLE_LABELS[role] || role}</p>
+              <p className="truncate text-sm font-semibold text-slate-900">{displayName}</p>
+              <p className="truncate text-xs text-slate-600">{ROLE_LABELS[role] || role}</p>
             </div>
-            <button onClick={handleLogout} aria-label="Déconnexion" title="Déconnexion" className="rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800">
+            <button onClick={handleLogout} aria-label="Déconnexion" title="Déconnexion" className={`rounded-sm p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 ${FOCUS}`}>
               <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M10 17l5-5-5-5M15 12H3" /><path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6" /></svg>
             </button>
           </div>
         </div>
       </aside>
 
-      <div className="md:pl-64">
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-slate-200 bg-white/90 px-4 backdrop-blur md:px-6">
+      <div className="md:pl-64 print:pl-0">
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-slate-200 bg-white/90 px-4 backdrop-blur md:px-6 print:hidden">
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
-            className="rounded-md border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-50 md:hidden"
+            className={`rounded-sm border border-slate-300 p-2 text-slate-700 transition hover:bg-slate-50 md:hidden ${FOCUS}`}
             aria-label="Ouvrir la navigation"
           >
             <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" className="h-5 w-5"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
           </button>
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-base font-semibold text-slate-900 md:text-lg">{activeLink?.label || config.title}</h1>
+            <h1 className="truncate text-base font-semibold tracking-tight text-slate-900 md:text-lg">{activeLink?.label || config.title}</h1>
             {activeLink && (
               <nav className="mt-0.5 hidden text-xs text-slate-500 sm:block" aria-label="Fil d’Ariane">
-                <ol className="flex items-center gap-1">
+                <ol className="flex items-center gap-1.5">
                   <li>{config.title}</li>
-                  <li aria-hidden="true" className="text-slate-300">/</li>
-                  <li className="text-slate-700">{activeLink.label}</li>
+                  <li aria-hidden="true" className="text-slate-400">/</li>
+                  <li className="font-medium text-slate-700">{activeLink.label}</li>
                 </ol>
               </nav>
             )}
           </div>
           <div className="flex items-center gap-2">
-            <div className="hidden items-center gap-2 border-l border-slate-200 pl-3 sm:flex">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-xs font-semibold text-blue-700">{initials(displayName)}</div>
-              <span className="max-w-40 truncate text-sm text-slate-700">{displayName}</span>
+            <div className="hidden items-center gap-2.5 border-l border-slate-200 pl-3 sm:flex">
+              <Avatar name={displayName} />
+              <span className="max-w-40 truncate text-sm font-medium text-slate-800">{displayName}</span>
             </div>
-            <button onClick={handleLogout} className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 md:hidden">Quitter</button>
+            <button onClick={handleLogout} className={`rounded-sm border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 md:hidden ${FOCUS}`}>Quitter</button>
           </div>
         </header>
 
-        <main className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8">
+        <main className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8 print:max-w-none print:p-0">
           {children || <Outlet />}
         </main>
       </div>

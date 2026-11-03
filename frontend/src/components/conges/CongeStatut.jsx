@@ -21,11 +21,10 @@ export function Badge({ tone = 'neutral', children }) {
   return (
     <span
       className={[
-        'inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-xs font-medium',
+        'inline-flex items-center rounded border px-2 py-0.5 text-xs font-medium',
         TONES[tone] || TONES.neutral,
       ].join(' ')}
     >
-      <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${DOTS[tone] || DOTS.neutral}`} />
       {children}
     </span>
   )

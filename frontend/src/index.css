@@ -41,3 +41,72 @@ textarea {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
+
+/* ------------------------------------------------------------------
+ * Impression des documents de paie (fiche et listes).
+ * Tant qu'un document est affiché, l'application (#root) est masquée à
+ * l'impression et seule la copie papier (#print-area) est imprimée :
+ * barre latérale, en-tête, boutons et autres blocs ne sortent plus.
+ * ------------------------------------------------------------------ */
+#print-area {
+  display: none;
+}
+
+@page {
+  size: A4;
+  margin: 12mm;
+}
+
+@media print {
+  body.printing-document {
+    background: #fff;
+  }
+
+  body.printing-document #root {
+    display: none !important;
+  }
+
+  body.printing-document #print-area {
+    display: block !important;
+  }
+
+  /* Le document occupe la page entière, sans bordure d'écran. */
+  #print-area .fiche-paie,
+  #print-area .document-liste {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    border: 0 !important;
+    padding: 0 !important;
+    color: #000 !important;
+    background: #fff !important;
+  }
+
+  #print-area table {
+    page-break-inside: auto;
+  }
+
+  /* L'en-tête du tableau se répète sur chaque page d'une longue liste. */
+  #print-area .document-liste thead {
+    display: table-header-group;
+  }
+
+  #print-area .document-liste thead tr {
+    background: #e5e7eb !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  #print-area tr,
+  #print-area thead {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Les totaux ne doivent pas être coupés en bas de page. */
+  #print-area tfoot,
+  #print-area .fiche-paie > div:last-child {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}

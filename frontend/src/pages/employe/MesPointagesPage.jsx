@@ -29,6 +29,24 @@ import {
   isoDateLocale,
 } from '../../utils/format.js'
 
+/*
+ * Palette de la page de connexion, angles droits :
+ *  #005EB8 bleu (action principale, liens, sélection)
+ *  #00449E marine (survol, texte sur fond bleu clair)
+ *  #E3EEFC teinte (fond de l'élément sélectionné et des succès)
+ * Tout le reste est en gris (slate).
+ */
+const BTN_PRIMARY = '!rounded-none !bg-[#005EB8] hover:!bg-[#00449E] focus:!ring-[#005EB8]/40'
+const BTN_SECONDARY = '!rounded-none !border-slate-300 !text-slate-800 hover:!bg-slate-50'
+const BTN_LINK = '!rounded-none !font-medium !text-[#005EB8] hover:!bg-slate-50'
+
+const TXT = {
+  titre: 'text-slate-900',
+  corps: 'text-slate-700',
+  secondaire: 'text-slate-600',
+  discret: 'text-slate-500',
+}
+
 const FORMATEUR_MINUTES = (valeur) =>
   valeur === null || valeur === undefined ? '—' : `${formatCell(valeur)} min`
 const FORMATEUR_HEURES = (valeur) =>
@@ -72,6 +90,33 @@ const COLONNES_HISTORIQUE = [
   { key: 'retardMinute', label: 'Retard', render: FORMATEUR_MINUTES },
   { key: 'heureSup', label: 'Heures sup.', render: FORMATEUR_HEURES },
 ]
+
+/* Même carte que MesCongesPage : titre dans un en-tête séparé par un trait */
+function Carte({ title, description, aside, children, bodyClassName = '' }) {
+  return (
+    <section className="border border-slate-200 bg-white">
+      <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-slate-200 px-4 py-3">
+        <div className="min-w-0">
+          <h2 className={`text-base font-semibold leading-6 tracking-tight ${TXT.titre}`}>{title}</h2>
+          {description && (
+            <p className={`mt-0.5 text-[13px] leading-5 ${TXT.secondaire}`}>{description}</p>
+          )}
+        </div>
+        {aside}
+      </header>
+      <div className={bodyClassName}>{children}</div>
+    </section>
+  )
+}
+
+function Chiffre({ label, children }) {
+  return (
+    <div>
+      <dt className={`text-[13px] ${TXT.secondaire}`}>{label}</dt>
+      <dd className={`mt-0.5 text-sm font-semibold tabular-nums ${TXT.titre}`}>{children}</dd>
+    </div>
+  )
+}
 
 export default function MesPointagesPage() {
   const { user } = useAuth()
@@ -248,31 +293,30 @@ export default function MesPointagesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 antialiased">
       <PageHeader
         title="Mes pointages"
         description="Enregistrez vos événements de présence avec le QR code affiché à l’entrée."
       />
 
       {/* Identité issue de la session */}
-      <section className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <section className="flex flex-col gap-3 border border-slate-200 bg-white px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-slate-900">
+          <p className={`truncate text-sm font-semibold ${TXT.titre}`}>
             {user?.nomEtPrenoms || user?.login || 'Utilisateur'}
           </p>
-          <p className="mt-0.5 text-xs text-slate-500">
-            {matricule ? `Matricule ${matricule}` : 'Matricule indisponible'} ·{' '}
-            {formatDate(aujourdHui)}
+          <p className={`mt-0.5 text-[13px] tabular-nums ${TXT.secondaire}`}>
+            {matricule ? `Matricule ${matricule}` : 'Matricule indisponible'}, {formatDate(aujourdHui)}
           </p>
         </div>
-        <div className="text-xs text-slate-500">
+        <div className={`text-[13px] ${TXT.secondaire}`}>
           {dernierEvenement ? (
             <span>
               Dernier événement :{' '}
-              <span className="font-medium text-slate-700">
+              <span className={`font-semibold ${TXT.titre}`}>
                 {labelEvenement(dernierEvenement.typeEvenement)}
               </span>{' '}
-              à {formatHeure(dernierEvenement.dateHeure)}
+              à <span className="tabular-nums">{formatHeure(dernierEvenement.dateHeure)}</span>
             </span>
           ) : (
             <span>Aucun événement aujourd’hui</span>
@@ -281,214 +325,208 @@ export default function MesPointagesPage() {
       </section>
 
       {!matricule && (
-        <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-          Votre profil ne contient pas de numéro de matricule : le pointage et l’historique sont
-          indisponibles. Contactez le service RH pour rattacher votre compte à un employé.
+        <div
+          role="alert"
+          className="border border-slate-300 bg-slate-50 p-3.5 text-sm leading-6 text-slate-800"
+        >
+          <p className="font-semibold">Numéro matricule manquant</p>
+          <p className="mt-0.5">
+            Le pointage et l’historique sont indisponibles. Contactez le service RH pour rattacher
+            votre compte à un employé.
+          </p>
         </div>
       )}
 
       {message && (
         <div
-          role="status"
-          className={`rounded-md border p-3 text-sm ${
+          role={message.type === 'success' ? 'status' : 'alert'}
+          className={`border px-4 py-3 text-sm leading-6 ${
             message.type === 'success'
-              ? 'border-green-200 bg-green-50 text-green-700'
-              : 'border-red-200 bg-red-50 text-red-700'
+              ? 'border-[#005EB8]/30 bg-[#E3EEFC] text-[#00449E]'
+              : 'border-slate-400 bg-slate-100 text-slate-900'
           }`}
         >
-          <p>{message.texte}</p>
-          {message.detail && <p className="mt-1 text-xs opacity-80">{message.detail}</p>}
+          <p className="font-medium">{message.texte}</p>
+          {message.detail && <p className="mt-1 text-[13px] opacity-90">{message.detail}</p>}
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-5">
         {/* Pointage */}
-        <section className="rounded-lg border border-slate-200 bg-white p-5 lg:col-span-3">
-          <h2 className="text-sm font-semibold text-slate-900">Pointer maintenant</h2>
-
-          {etape === 'repos' && (
-            <>
-              <p className="mt-1 text-sm text-slate-500">
-                Scannez le QR code affiché à l’entrée, puis choisissez l’événement à enregistrer.
-              </p>
-              {journeeClose && (
-                <p className="mt-2 text-sm text-slate-600">
-                  Votre journée est clôturée : la sortie a déjà été enregistrée.
+        <div className="lg:col-span-3">
+          <Carte title="Pointer maintenant" bodyClassName="p-4">
+            {etape === 'repos' && (
+              <>
+                <p className={`text-sm leading-6 ${TXT.secondaire}`}>
+                  Scannez le QR code affiché à l’entrée, puis choisissez l’événement à enregistrer.
                 </p>
-              )}
-              <div className="mt-4">
-                <Button
-                  variant="primary"
-                  onClick={ouvrirScanner}
-                  disabled={!matricule || envoi || journeeClose}
-                  className="w-full sm:w-auto"
-                >
-                  Scanner le QR code
-                </Button>
-              </div>
-            </>
-          )}
-
-          {etape === 'verification' && (
-            <div className="mt-4 flex items-center gap-3 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-              <span
-                aria-hidden="true"
-                className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-r-slate-600"
-              />
-              Vérification du QR code…
-            </div>
-          )}
-
-          {etape === 'choix' && (
-            <div className="mt-4 space-y-4">
-              <div className="flex items-start gap-2 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">
-                <span aria-hidden="true">✓</span>
-                <p>QR code vérifié. Choisissez l’événement à enregistrer.</p>
-              </div>
-
-              <fieldset>
-                <legend className="sr-only">Événement à enregistrer</legend>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  {EVENEMENTS_POINTAGE.map((evenement) => {
-                    const desactive = !estAutorise(evenement.value)
-                    const selectionne = typeChoisi === evenement.value
-
-                    return (
-                      <button
-                        key={evenement.value}
-                        type="button"
-                        aria-pressed={selectionne}
-                        disabled={desactive || envoi}
-                        title={
-                          desactive
-                            ? 'Non disponible après l’événement déjà enregistré.'
-                            : undefined
-                        }
-                        onClick={() => setTypeChoisi(evenement.value)}
-                        className={[
-                          'rounded-md border p-3 text-left transition-colors',
-                          'focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500',
-                          selectionne
-                            ? 'border-blue-600 bg-blue-50'
-                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50',
-                          desactive || envoi
-                            ? 'cursor-not-allowed opacity-50 hover:border-slate-200 hover:bg-white'
-                            : '',
-                        ].join(' ')}
-                      >
-                        <span className="block text-sm font-medium text-slate-900">
-                          {evenement.label}
-                        </span>
-                        <span className="mt-0.5 block text-xs text-slate-500">
-                          {evenement.description}
-                        </span>
-                      </button>
-                    )
-                  })}
+                {journeeClose && (
+                  <p className={`mt-2 text-sm font-medium ${TXT.titre}`}>
+                    Votre journée est clôturée : la sortie a déjà été enregistrée.
+                  </p>
+                )}
+                <div className="mt-4">
+                  <Button
+                    variant="primary"
+                    className={`${BTN_PRIMARY} w-full sm:w-auto`}
+                    onClick={ouvrirScanner}
+                    disabled={!matricule || envoi || journeeClose}
+                  >
+                    Scanner le QR code
+                  </Button>
                 </div>
-              </fieldset>
+              </>
+            )}
 
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Button
-                  variant="primary"
-                  onClick={handleConfirmer}
-                  loading={envoi}
-                  disabled={!typeChoisi || envoi}
-                >
-                  {envoi ? 'Enregistrement…' : 'Confirmer le pointage'}
-                </Button>
-                <Button variant="secondary" onClick={annulerChoix} disabled={envoi}>
-                  Annuler
-                </Button>
+            {etape === 'verification' && (
+              <div
+                role="status"
+                className={`flex items-center gap-3 border border-slate-200 bg-slate-50 p-4 text-sm ${TXT.secondaire}`}
+              >
+                <span
+                  aria-hidden="true"
+                  className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-r-[#005EB8]"
+                />
+                Vérification du QR code…
               </div>
-            </div>
-          )}
-        </section>
+            )}
+
+            {etape === 'choix' && (
+              <div className="space-y-4">
+                <p className="border border-[#005EB8]/30 bg-[#E3EEFC] px-4 py-3 text-sm font-medium text-[#00449E]">
+                  QR code vérifié. Choisissez l’événement à enregistrer.
+                </p>
+
+                <fieldset>
+                  <legend className="sr-only">Événement à enregistrer</legend>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {EVENEMENTS_POINTAGE.map((evenement) => {
+                      const desactive = !estAutorise(evenement.value)
+                      const selectionne = typeChoisi === evenement.value
+
+                      return (
+                        <button
+                          key={evenement.value}
+                          type="button"
+                          aria-pressed={selectionne}
+                          disabled={desactive || envoi}
+                          title={
+                            desactive
+                              ? 'Non disponible après l’événement déjà enregistré.'
+                              : undefined
+                          }
+                          onClick={() => setTypeChoisi(evenement.value)}
+                          className={[
+                            'border p-3 text-left transition-colors',
+                            'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#005EB8]/40',
+                            selectionne
+                              ? 'border-[#005EB8] bg-[#E3EEFC] ring-1 ring-[#005EB8]'
+                              : 'border-slate-300 bg-white hover:bg-slate-50',
+                            desactive || envoi
+                              ? 'cursor-not-allowed opacity-50 hover:bg-white'
+                              : '',
+                          ].join(' ')}
+                        >
+                          <span
+                            className={`block text-sm font-semibold ${
+                              selectionne ? 'text-[#00449E]' : TXT.titre
+                            }`}
+                          >
+                            {evenement.label}
+                          </span>
+                          <span className={`mt-0.5 block text-[13px] leading-5 ${TXT.secondaire}`}>
+                            {evenement.description}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </fieldset>
+
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button
+                    variant="primary"
+                    className={BTN_PRIMARY}
+                    onClick={handleConfirmer}
+                    loading={envoi}
+                    disabled={!typeChoisi || envoi}
+                  >
+                    {envoi ? 'Enregistrement…' : 'Confirmer le pointage'}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    className={BTN_SECONDARY}
+                    onClick={annulerChoix}
+                    disabled={envoi}
+                  >
+                    Annuler
+                  </Button>
+                </div>
+              </div>
+            )}
+          </Carte>
+        </div>
 
         {/* Journée en cours */}
-        <section className="rounded-lg border border-slate-200 bg-white p-5 lg:col-span-2">
-          <h2 className="text-sm font-semibold text-slate-900">Journée en cours</h2>
+        <div className="lg:col-span-2">
+          <Carte title="Journée en cours" bodyClassName="px-4">
+            <div className="py-3">
+              {chargementEvenements ? (
+                <p className={`text-sm ${TXT.secondaire}`} role="status">Chargement…</p>
+              ) : erreurEvenements ? (
+                <p className={`text-sm font-medium ${TXT.titre}`} role="alert">
+                  {messageErreurPointage(erreurEvenements).texte}
+                </p>
+              ) : listeEvenements.length === 0 ? (
+                <p className={`text-sm ${TXT.secondaire}`}>Aucun événement enregistré aujourd’hui.</p>
+              ) : (
+                <ol className="-my-3 divide-y divide-slate-200">
+                  {listeEvenements.map((evenement) => (
+                    <li
+                      key={evenement.id}
+                      className="flex items-center justify-between gap-3 py-2.5"
+                    >
+                      <div className="flex items-baseline gap-3">
+                        <span className={`w-14 text-sm font-semibold tabular-nums ${TXT.titre}`}>
+                          {formatHeure(evenement.dateHeure)}
+                        </span>
+                        <span className={`text-sm ${TXT.corps}`}>
+                          {labelEvenement(evenement.typeEvenement)}
+                        </span>
+                      </div>
+                      {evenement.modePointage && (
+                        <span className={`text-xs ${TXT.discret}`}>{evenement.modePointage}</span>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
 
-          <div className="mt-4">
-            {chargementEvenements ? (
-              <p className="text-sm text-slate-500">Chargement…</p>
-            ) : erreurEvenements ? (
-              <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                {messageErreurPointage(erreurEvenements).texte}
-              </div>
-            ) : listeEvenements.length === 0 ? (
-              <p className="text-sm text-slate-500">Aucun événement enregistré aujourd’hui.</p>
-            ) : (
-              <ol className="divide-y divide-slate-100">
-                {listeEvenements.map((evenement) => (
-                  <li
-                    key={evenement.id}
-                    className="flex items-center justify-between gap-3 py-2.5"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="w-14 text-sm font-medium tabular-nums text-slate-700">
-                        {formatHeure(evenement.dateHeure)}
-                      </span>
-                      <span className="text-sm text-slate-600">
-                        {labelEvenement(evenement.typeEvenement)}
-                      </span>
-                    </div>
-                    {evenement.modePointage && (
-                      <span className="text-[11px] uppercase tracking-wide text-slate-400">
-                        {evenement.modePointage}
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ol>
+            {pointageDuJour && (
+              <dl className="grid grid-cols-2 gap-3 border-t border-slate-200 py-4">
+                <Chiffre label="Entrée">{formatHeure(pointageDuJour.heureEntree)}</Chiffre>
+                <Chiffre label="Sortie">{formatHeure(pointageDuJour.heureSortie)}</Chiffre>
+                <Chiffre label="Retard">{FORMATEUR_MINUTES(pointageDuJour.retardMinute)}</Chiffre>
+                <Chiffre label="Heures sup.">{FORMATEUR_HEURES(pointageDuJour.heureSup)}</Chiffre>
+              </dl>
             )}
-          </div>
-
-          {pointageDuJour && (
-            <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
-              <div>
-                <dt className="text-xs text-slate-500">Entrée</dt>
-                <dd className="text-sm font-medium tabular-nums text-slate-800">
-                  {formatHeure(pointageDuJour.heureEntree)}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs text-slate-500">Sortie</dt>
-                <dd className="text-sm font-medium tabular-nums text-slate-800">
-                  {formatHeure(pointageDuJour.heureSortie)}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs text-slate-500">Retard</dt>
-                <dd className="text-sm font-medium tabular-nums text-slate-800">
-                  {FORMATEUR_MINUTES(pointageDuJour.retardMinute)}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs text-slate-500">Heures sup.</dt>
-                <dd className="text-sm font-medium tabular-nums text-slate-800">
-                  {FORMATEUR_HEURES(pointageDuJour.heureSup)}
-                </dd>
-              </div>
-            </dl>
-          )}
-        </section>
+          </Carte>
+        </div>
       </div>
 
       {/* Historique */}
-      <section className="space-y-4">
-        <div>
-          <h2 className="text-sm font-semibold text-slate-900">Historique</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Récapitulatif de vos journées de présence, calculé par le backend.
-          </p>
-        </div>
-
+      <Carte
+        title="Historique"
+        description="Récapitulatif de vos journées de présence, calculé par le backend."
+      >
         {!matricule ? (
-          <EmptyState
-            label="Historique indisponible"
-            hint="Votre compte n’est rattaché à aucun matricule employé."
-          />
+          <div className="py-6">
+            <EmptyState
+              label="Historique indisponible"
+              hint="Votre compte n’est rattaché à aucun matricule employé."
+            />
+          </div>
         ) : (
           <AsyncBoundary
             loading={chargementHistorique}
@@ -502,7 +540,7 @@ export default function MesPointagesPage() {
             )}
           </AsyncBoundary>
         )}
-      </section>
+      </Carte>
 
       <Modal
         open={scannerOuvert}
@@ -511,7 +549,7 @@ export default function MesPointagesPage() {
         size="md"
       >
         <div className="space-y-4">
-          <p className="text-sm text-slate-500">
+          <p className={`text-sm leading-6 ${TXT.secondaire}`}>
             Autorisez la caméra si le navigateur le demande, puis présentez le QR code affiché à
             l’entrée.
           </p>
@@ -522,7 +560,7 @@ export default function MesPointagesPage() {
             <button
               type="button"
               onClick={() => setSaisieManuelle((valeur) => !valeur)}
-              className="text-xs font-medium text-blue-700 hover:underline"
+              className="text-[13px] font-semibold text-[#005EB8] underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#005EB8]/40"
             >
               {saisieManuelle ? 'Masquer la saisie manuelle' : 'Saisir le code manuellement'}
             </button>
@@ -540,10 +578,15 @@ export default function MesPointagesPage() {
                     onChange={(evenement) => setCodeManuel(evenement.target.value)}
                     placeholder="Code affiché sur le QR code"
                     autoComplete="off"
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                    className="w-full border border-slate-300 bg-[#E3EEFC]/40 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:border-[#005EB8] focus:outline-none focus:ring-2 focus:ring-[#005EB8]/30"
                   />
                 </div>
-                <Button type="submit" variant="secondary" disabled={!codeManuel.trim()}>
+                <Button
+                  type="submit"
+                  variant="secondary"
+                  className={BTN_SECONDARY}
+                  disabled={!codeManuel.trim()}
+                >
                   Valider
                 </Button>
               </form>
@@ -551,7 +594,7 @@ export default function MesPointagesPage() {
           </div>
 
           <div className="flex justify-end">
-            <Button variant="ghost" onClick={fermerScanner}>
+            <Button variant="ghost" className={BTN_LINK} onClick={fermerScanner}>
               Annuler
             </Button>
           </div>

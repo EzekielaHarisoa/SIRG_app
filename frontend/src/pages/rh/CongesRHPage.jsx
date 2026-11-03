@@ -30,6 +30,7 @@ import {
 } from '../../config/contracts.js'
 import { formatDate } from '../../utils/format.js'
 
+/* Palette de la page : bleu #005EB8, marine #00449E, teinte #E3EEFC, gris slate. */
 const FILTRES_VIDES = { recherche: '', statut: '', type: '' }
 
 function dureeJours(debut, fin) {

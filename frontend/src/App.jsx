@@ -20,6 +20,7 @@ import CongesRHPage from './pages/rh/CongesRHPage.jsx'
 import SoldesRHPage from './pages/rh/SoldesRHPage.jsx'
 
 import PaieRHPage from './pages/rh/PaieRHPage.jsx'
+import GenerationBulletinPage from './pages/rh/GenerationBulletinPage.jsx'
 
 function HomeRedirect() {
   const { isAuthenticated, role } = useAuth()
@@ -65,6 +66,7 @@ export default function App() {
         <Route path="conges" element={<CongesRHPage />} />
         <Route path="soldes" element={<SoldesRHPage />} />
         <Route path="paie" element={<PaieRHPage />} />
+        <Route path="paie/generer" element={<GenerationBulletinPage />} />
       </Route>
 
       {/* Comptable */}

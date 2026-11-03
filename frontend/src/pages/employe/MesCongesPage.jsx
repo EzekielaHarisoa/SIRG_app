@@ -19,6 +19,25 @@ import { formatDate } from '../../utils/format.js'
 
 const NOMBRE = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 })
 
+/* Le bleu n'est utilisé que pour l'action principale et les liens */
+const BTN_PRIMARY = '!rounded-none !bg-[#005EB8] hover:!bg-[#00449E] focus:!ring-[#005EB8]/40'
+const BTN_SECONDARY = '!rounded-none !border-slate-300 !text-slate-800 hover:!bg-slate-50'
+const BTN_LINK = '!rounded-none !font-medium !text-[#005EB8] hover:!bg-slate-50'
+
+/*
+ * Hiérarchie typographique (5 niveaux de texte, tous lisibles sur fond blanc) :
+ *  - TXT.titre       : titres et valeurs importantes
+ *  - TXT.corps       : contenu courant
+ *  - TXT.secondaire  : libellés, descriptions
+ *  - TXT.discret     : métadonnées (dates de demande, durées)
+ */
+const TXT = {
+  titre: 'text-slate-900',
+  corps: 'text-slate-700',
+  secondaire: 'text-slate-600',
+  discret: 'text-slate-500',
+}
+
 function dureeJours(debut, fin) {
   if (!debut || !fin) return null
   const d = new Date(`${debut}T00:00:00`)
@@ -29,11 +48,13 @@ function dureeJours(debut, fin) {
 
 function Carte({ title, description, aside, children, bodyClassName = '' }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white">
-      <header className="flex flex-wrap items-start justify-between gap-2 border-b border-slate-100 px-5 py-3.5">
+    <section className="rounded-sm border border-slate-200 bg-white">
+      <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-slate-200 px-4 py-3">
         <div className="min-w-0">
-          <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
-          {description && <p className="mt-0.5 text-xs text-slate-500">{description}</p>}
+          <h2 className={`text-base font-semibold leading-6 tracking-tight ${TXT.titre}`}>{title}</h2>
+          {description && (
+            <p className={`mt-0.5 text-[13px] leading-5 ${TXT.secondaire}`}>{description}</p>
+          )}
         </div>
         {aside}
       </header>
@@ -42,15 +63,16 @@ function Carte({ title, description, aside, children, bodyClassName = '' }) {
   )
 }
 
-function LigneDetail({ label, children }) {
+function Ligne({ label, children }) {
   return (
-    <div className="flex items-start justify-between gap-4 py-2">
-      <dt className="text-sm text-slate-500">{label}</dt>
-      <dd className="text-right text-sm font-medium text-slate-800">{children}</dd>
+    <div className="flex items-baseline justify-between gap-4 py-2.5">
+      <dt className={`text-sm ${TXT.secondaire}`}>{label}</dt>
+      <dd className={`break-words text-right text-sm font-semibold tabular-nums ${TXT.titre}`}>
+        {children}
+      </dd>
     </div>
   )
 }
-
 export default function MesCongesPage() {
   const { user } = useAuth()
   const matricule = user?.numeroMatricule ?? null
@@ -82,6 +104,8 @@ export default function MesCongesPage() {
     return parStatut
   }, [demandes])
 
+  const joursRestants = Number(soldeQuery.data?.totalJoursRestants ?? 0)
+
   const handleSubmit = async (payload) => {
     if (envoiRef.current) return
     envoiRef.current = true
@@ -108,34 +132,45 @@ export default function MesCongesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 antialiased">
       <PageHeader
         title="Mes congés"
         description="Suivez vos demandes et déposez une nouvelle demande de congé."
         actions={
-          <Button variant="primary" onClick={ouvrirFormulaire} disabled={!matricule}>
+          <Button
+            variant="primary"
+            className={BTN_PRIMARY}
+            onClick={ouvrirFormulaire}
+            disabled={!matricule}
+          >
             Nouvelle demande
           </Button>
         }
       />
 
       {!matricule && (
-        <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-          Votre profil ne contient pas de numéro matricule : vos demandes sont indisponibles.
-          Contactez le service RH pour rattacher votre compte à un employé.
+        <div
+          role="alert"
+          className="rounded-sm border border-slate-300 bg-slate-50 p-3.5 text-sm leading-6 text-slate-800"
+        >
+          <p className="font-semibold">Numéro matricule manquant</p>
+          <p className="mt-0.5">
+            Votre profil n'est rattaché à aucun employé, vos demandes sont donc indisponibles.
+            Contactez le service RH pour corriger cela.
+          </p>
         </div>
       )}
 
       {succes && (
         <div
           role="status"
-          className="flex items-start justify-between gap-3 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+          className="flex items-start justify-between gap-3 rounded-md border border-slate-300 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-900"
         >
-          <span>{succes}</span>
+          <span className="font-medium">{succes}</span>
           <button
             type="button"
             onClick={() => setSucces(null)}
-            className="text-xs font-medium text-emerald-700 hover:underline"
+            className="shrink-0 text-sm font-semibold text-[#2B5CB8] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B5CB8]/40"
           >
             Fermer
           </button>
@@ -148,32 +183,31 @@ export default function MesCongesPage() {
             title={user?.nomEtPrenoms || user?.login || 'Utilisateur'}
             meta={`Matricule ${matricule}`}
             aside={
-              <span className="text-xs tabular-nums text-slate-500">
-                {demandes.length} demande{demandes.length > 1 ? 's' : ''} enregistrée
-                {demandes.length > 1 ? 's' : ''}
+              <span className={`text-[13px] tabular-nums ${TXT.secondaire}`}>
+                <span className={`font-semibold ${TXT.titre}`}>{demandes.length}</span> demande
+                {demandes.length > 1 ? 's' : ''} enregistrée{demandes.length > 1 ? 's' : ''}
               </span>
             }
           />
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-            {/* Demandes */}
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-5">
+            {/* Demandes : tableau */}
             <div className="lg:col-span-3">
               <Carte
                 title="Mes demandes"
                 description="De la plus récente à la plus ancienne."
                 aside={
-                  <span className="text-xs tabular-nums text-slate-500">
+                  <span className={`text-[13px] tabular-nums ${TXT.secondaire}`}>
                     {demandes.length} au total
                   </span>
                 }
-                bodyClassName="px-5"
               >
                 {loading ? (
-                  <p className="py-10 text-center text-sm text-slate-500" role="status">
+                  <p className={`py-10 text-center text-sm ${TXT.secondaire}`} role="status">
                     Chargement de vos demandes…
                   </p>
                 ) : error ? (
-                  <div className="py-4">
+                  <div className="p-4">
                     <ErrorState error={error} onRetry={refetch} />
                   </div>
                 ) : demandes.length === 0 ? (
@@ -182,59 +216,127 @@ export default function MesCongesPage() {
                       label="Aucune demande de congé"
                       hint="Votre historique apparaîtra ici dès votre première demande."
                       action={
-                        <Button variant="secondary" size="sm" onClick={ouvrirFormulaire}>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className={BTN_SECONDARY}
+                          onClick={ouvrirFormulaire}
+                        >
                           Créer une demande
                         </Button>
                       }
                     />
                   </div>
                 ) : (
-                  <ul className="divide-y divide-slate-100">
-                    {demandes.map((demande) => {
-                      const jours = dureeJours(demande.dateDeDebut, demande.dateFin)
-                      return (
-                        <li
-                          key={demande[F.id]}
-                          className="flex items-start justify-between gap-3 py-3.5"
-                        >
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <p className="text-sm font-medium text-slate-900">
-                                {labelTypeConge(demande.typeConge)}
-                              </p>
-                              <StatutDemandeBadge status={demande.status} />
-                            </div>
-                            <p className="mt-1 text-xs tabular-nums text-slate-500">
-                              {formatDate(demande.dateDeDebut)} → {formatDate(demande.dateFin)}
-                              {jours ? ` · ${jours} jour${jours > 1 ? 's' : ''}` : ''}
-                            </p>
-                            {demande.motifRefus && (
-                              <p className="mt-1.5 text-xs text-rose-700">
-                                Motif du refus : {demande.motifRefus}
-                              </p>
-                            )}
-                          </div>
-
-                          <div className="flex shrink-0 items-center gap-2">
-                            <span className="hidden text-xs tabular-nums text-slate-400 sm:inline">
-                              Demandée le {formatDate(demande.dateDeDemande)}
-                            </span>
-                            <Button variant="ghost" size="sm" onClick={() => setSelection(demande)}>
-                              Détails
-                            </Button>
-                          </div>
-                        </li>
-                      )
-                    })}
-                  </ul>
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[520px] text-left">
+                      <thead>
+                        <tr className="border-b border-slate-200 bg-slate-50 text-xs text-slate-600">
+                          <th scope="col" className="px-4 py-2.5 font-semibold">Type</th>
+                          <th scope="col" className="px-4 py-2.5 font-semibold">Période</th>
+                          <th scope="col" className="px-4 py-2.5 font-semibold">Statut</th>
+                          <th scope="col" className="px-4 py-2.5">
+                            <span className="sr-only">Actions</span>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200">
+                        {demandes.map((demande) => {
+                          const jours = dureeJours(demande.dateDeDebut, demande.dateFin)
+                          return (
+                            <tr key={demande[F.id]} className="align-top">
+                              <td className="px-4 py-3">
+                                <p className={`text-sm font-semibold leading-5 ${TXT.titre}`}>
+                                  {labelTypeConge(demande.typeConge)}
+                                </p>
+                                <p className={`mt-0.5 text-[13px] leading-5 tabular-nums ${TXT.discret}`}>
+                                  Demandée le {formatDate(demande.dateDeDemande)}
+                                </p>
+                                {demande.motifRefus && (
+                                  <p className="mt-1 text-[13px] leading-5 text-slate-700">
+                                    <span className="font-semibold">Motif du refus :</span>{' '}
+                                    {demande.motifRefus}
+                                  </p>
+                                )}
+                              </td>
+                              <td className={`px-4 py-3 text-sm leading-5 tabular-nums ${TXT.corps}`}>
+                                <span className="font-medium text-slate-900">
+                                  {formatDate(demande.dateDeDebut)}
+                                </span>{' '}
+                                <span className={TXT.discret}>au</span>{' '}
+                                <span className="font-medium text-slate-900">
+                                  {formatDate(demande.dateFin)}
+                                </span>
+                                {jours && (
+                                  <p className={`mt-0.5 text-[13px] ${TXT.discret}`}>
+                                    {jours} jour{jours > 1 ? 's' : ''}
+                                  </p>
+                                )}
+                              </td>
+                              <td className="px-4 py-3">
+                                <StatutDemandeBadge status={demande.status} />
+                              </td>
+                              <td className="px-4 py-2.5 text-right">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className={BTN_LINK}
+                                  onClick={() => setSelection(demande)}
+                                >
+                                  Détails
+                                </Button>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </Carte>
             </div>
 
             {/* Synthèse */}
-            <div className="space-y-6 lg:col-span-2">
-              <Carte title="Répartition" description="État de vos demandes." bodyClassName="px-5">
-                <ul className="divide-y divide-slate-100">
+            <div className="space-y-5 lg:col-span-2">
+              <Carte title="Solde de congés" bodyClassName="px-4">
+                {soldeQuery.loading ? (
+                  <p className={`py-4 text-sm ${TXT.secondaire}`}>Chargement…</p>
+                ) : soldeQuery.error ? (
+                  <p className={`py-4 text-sm ${TXT.secondaire}`}>
+                    Solde indisponible pour le moment.
+                  </p>
+                ) : (
+                  <>
+                    <dl className="divide-y divide-slate-200">
+                      <Ligne label="Jours acquis">
+                        {NOMBRE.format(Number(soldeQuery.data?.totalJoursAcquis ?? 0))}
+                      </Ligne>
+                      <Ligne label="Jours consommés">
+                        {NOMBRE.format(Number(soldeQuery.data?.totalJoursConsommes ?? 0))}
+                      </Ligne>
+                      <div className="flex items-baseline justify-between gap-4 py-3">
+                        <dt className={`text-sm font-semibold ${TXT.titre}`}>Jours restants</dt>
+                        <dd
+                          className={`text-xl font-semibold tabular-nums ${TXT.titre}`}
+                        >
+                          {NOMBRE.format(joursRestants)}
+                        </dd>
+                      </div>
+                    </dl>
+                    <div className="border-t border-slate-200 py-3">
+                      <Link
+                        to="/employe/solde"
+                        className="text-[13px] font-semibold text-[#2B5CB8] underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B5CB8]/40"
+                      >
+                        Voir le détail des tranches
+                      </Link>
+                    </div>
+                  </>
+                )}
+              </Carte>
+
+              <Carte title="Répartition" description="État de vos demandes." bodyClassName="px-4">
+                <ul className="divide-y divide-slate-200">
                   {[STATUTS_DEMANDE.EN_ATTENTE, STATUTS_DEMANDE.ACCEPTER, STATUTS_DEMANDE.REFUSER].map(
                     (statut) => (
                       <li
@@ -242,38 +344,13 @@ export default function MesCongesPage() {
                         className="flex items-center justify-between gap-3 py-2.5"
                       >
                         <StatutDemandeBadge status={statut.value} />
-                        <span className="text-sm font-semibold tabular-nums text-slate-800">
+                        <span className={`text-base font-semibold tabular-nums ${TXT.titre}`}>
                           {compteurs[statut.value]}
                         </span>
                       </li>
                     ),
                   )}
                 </ul>
-              </Carte>
-
-              <Carte title="Solde disponible" bodyClassName="px-5 py-4">
-                {soldeQuery.loading ? (
-                  <p className="text-sm text-slate-500">Chargement…</p>
-                ) : soldeQuery.error ? (
-                  <p className="text-sm text-slate-500">Solde indisponible pour le moment.</p>
-                ) : (
-                  <>
-                    <p className="text-2xl font-semibold tabular-nums text-slate-900">
-                      {NOMBRE.format(Number(soldeQuery.data?.totalJoursRestants ?? 0))}
-                      <span className="ml-1 text-sm font-normal text-slate-500">jours restants</span>
-                    </p>
-                    <p className="mt-1 text-xs tabular-nums text-slate-500">
-                      {NOMBRE.format(Number(soldeQuery.data?.totalJoursAcquis ?? 0))} acquis ·{' '}
-                      {NOMBRE.format(Number(soldeQuery.data?.totalJoursConsommes ?? 0))} consommés
-                    </p>
-                    <Link
-                      to="/employe/solde"
-                      className="mt-3 inline-block text-xs font-medium text-blue-700 hover:underline"
-                    >
-                      Voir le détail des tranches
-                    </Link>
-                  </>
-                )}
               </Carte>
             </div>
           </div>
@@ -291,35 +368,39 @@ export default function MesCongesPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-slate-900">
+                <p className={`text-base font-semibold leading-6 tracking-tight ${TXT.titre}`}>
                   {labelTypeConge(selection.typeConge)}
                 </p>
-                <p className="text-xs tabular-nums text-slate-500">Demande n° {selection.id}</p>
+                <p className={`text-[13px] tabular-nums ${TXT.secondaire}`}>
+                  Demande n° {selection.id}
+                </p>
               </div>
               <StatutDemandeBadge status={selection.status} />
             </div>
 
-            <dl className="divide-y divide-slate-100 border-y border-slate-100">
-              <LigneDetail label="Du">{formatDate(selection.dateDeDebut)}</LigneDetail>
-              <LigneDetail label="Au">{formatDate(selection.dateFin)}</LigneDetail>
-              <LigneDetail label="Durée">
+            <dl className="divide-y divide-slate-200 border-y border-slate-200">
+              <Ligne label="Du">{formatDate(selection.dateDeDebut)}</Ligne>
+              <Ligne label="Au">{formatDate(selection.dateFin)}</Ligne>
+              <Ligne label="Durée">
                 {dureeJours(selection.dateDeDebut, selection.dateFin) ?? '—'} jour(s)
-              </LigneDetail>
-              <LigneDetail label="Demandée le">{formatDate(selection.dateDeDemande)}</LigneDetail>
-              <LigneDetail label="Motif">{selection.motif || '—'}</LigneDetail>
+              </Ligne>
+              <Ligne label="Demandée le">{formatDate(selection.dateDeDemande)}</Ligne>
+              <Ligne label="Motif">
+                <span className="font-medium">{selection.motif || '—'}</span>
+              </Ligne>
             </dl>
 
             {selection.status === STATUTS_DEMANDE.REFUSER.value && (
-              <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2.5">
-                <p className="text-xs font-medium uppercase tracking-wide text-rose-700">
-                  Motif du refus
+              <div className="rounded-sm border border-slate-300 bg-slate-50 px-4 py-3">
+                <p className="text-sm font-semibold text-slate-900">Motif du refus</p>
+                <p className="mt-1 text-sm leading-6 text-slate-700">
+                  {selection.motifRefus || 'Non précisé.'}
                 </p>
-                <p className="mt-1 text-sm text-rose-800">{selection.motifRefus || 'Non précisé.'}</p>
               </div>
             )}
 
             <div className="flex justify-end">
-              <Button variant="secondary" onClick={() => setSelection(null)}>
+              <Button variant="secondary" className={BTN_SECONDARY} onClick={() => setSelection(null)}>
                 Fermer
               </Button>
             </div>
